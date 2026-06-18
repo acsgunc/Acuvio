@@ -1,0 +1,9 @@
+# Statically link the Microsoft Visual C++ runtime (CRT) on Windows.
+#
+# Rust's MSVC target dynamically links vcruntime140.dll / msvcp140.dll by
+# default, which would make the "VC++ 2015–2022 Redistributable" a runtime
+# dependency of the installed app. Linking the CRT statically folds that code
+# into acuvio.exe, so the only external dependency end users need is the
+# WebView2 Runtime (which the installer detects and installs automatically).
+[target.'cfg(target_os = "windows")']
+rustflags = ["-C", "target-feature=+crt-static"]

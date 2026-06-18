@@ -44,6 +44,10 @@
     "longDescription": "Acuvio is a high-performance, Notepad++-style log analyzer for multi-gigabyte log files with live tailing, memory-mapped reading, regex/literal search, filtering and severity highlighting.",
     "licenseFile": "../LICENSE",
     "windows": {
+      "webviewInstallMode": {
+        "type": "downloadBootstrapper",
+        "silent": true
+      },
       "nsis": {
         "installMode": "perMachine",
         "languages": ["English"],

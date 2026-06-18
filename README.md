@@ -147,7 +147,29 @@ single-instance plugin.
 > types through `bundle.fileAssociations` in `tauri.conf.json` if you want an
 > equivalent "Open with" entry there.
 
-**Per-OS prerequisites**
+### Runtime dependencies (what the installer checks & installs)
+
+Acuvio ships as a self-contained executable, so end users normally need
+**nothing extra**:
+
+- **Microsoft Edge WebView2 Runtime** — the only external dependency (it renders
+  the UI). It is preinstalled on Windows 11 and most up-to-date Windows 10
+  machines. If it is missing, the installer:
+  1. **Detects** it up-front and shows a prompt explaining what is missing;
+  2. **Installs it automatically** by downloading Microsoft's official
+     bootstrapper (configured via `webviewInstallMode` in
+     [`tauri.conf.json`](src-tauri/tauri.conf.json)); and
+  3. if the automatic install is declined or fails, opens the **manual download
+     page** (<https://go.microsoft.com/fwlink/p/?LinkId=2124703>) so the user
+     knows exactly how to install it.
+
+  The detection/prompt logic lives in the `NSIS_HOOK_PREINSTALL` macro in
+  [`src-tauri/installer-hooks.nsh`](src-tauri/installer-hooks.nsh).
+- **Visual C++ Runtime** — *not required*. Acuvio statically links the MSVC CRT
+  ([`src-tauri/.cargo/config.toml`](src-tauri/.cargo/config.toml)), so there is
+  no dependency on the "VC++ 2015–2022 Redistributable".
+
+**Per-OS prerequisites (for building installers)**
 
 - **Windows:** WiX (for MSI) and NSIS are downloaded automatically by Tauri on
   the first build. For signed installers, set `WINDOWS_CERTIFICATE` /
@@ -213,7 +235,8 @@ acuvio/
 │   │   ├── tailer.rs          # notify-based live tailing -> events
 │   │   └── state.rs           # open files + active tailers
 │   ├── capabilities/default.json
-│   ├── installer-hooks.nsh    # NSIS hooks: "Open with Acuvio" context menu
+│   ├── installer-hooks.nsh    # NSIS hooks: WebView2 check + "Open with" menu
+│   ├── .cargo/config.toml     # static CRT (no VC++ redist dependency)
 │   ├── Cargo.toml
 │   └── tauri.conf.json        # frontendDist = "../dist/acuvio/browser"
 ├── src/                       # Angular frontend
