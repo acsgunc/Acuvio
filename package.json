@@ -12,7 +12,10 @@
     "test": "ng test",
     "tauri": "tauri",
     "dev": "tauri dev",
-    "app:build": "tauri build"
+    "app:build": "tauri build",
+    "update": "node scripts/update-deps.mjs",
+    "update:check": "node scripts/update-deps.mjs --check",
+    "update:latest": "node scripts/update-deps.mjs --latest"
   },
   "private": true,
   "dependencies": {

@@ -121,6 +121,22 @@ node scripts/generate-sample-log.mjs --follow sample.log
 
 ---
 
+## Updating dependencies
+
+Use the bundled cross-platform updater (Windows, macOS, Linux):
+
+```bash
+npm run update:check     # preview what's outdated
+npm run update           # safe minor/patch updates + verify
+npm run update:latest    # bump to newest majors
+```
+
+See [docs/UPDATING.md](docs/UPDATING.md) for full options, OS-specific
+launchers (`scripts/update.sh`, `update.ps1`, `update.cmd`), and guidance on
+major upgrades.
+
+---
+
 ## Project structure
 
 ```
