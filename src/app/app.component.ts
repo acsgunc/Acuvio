@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  OnInit,
   ViewChild,
   inject,
   signal,
@@ -55,7 +56,7 @@ interface Tab {
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
   private readonly log = inject(LogService);
   private readonly tail = inject(TailService);
   private readonly searchSvc = inject(SearchService);
@@ -71,6 +72,20 @@ export class AppComponent {
   readonly activeTab = computed<Tab | null>(() => this.tabs()[this.activeIndex()] ?? null);
 
   // ---- file open / close ----
+
+  async ngOnInit(): Promise<void> {
+    // Open files requested by the OS while Acuvio is already running
+    // (Windows "Open with Acuvio" context-menu entry on a second launch).
+    this.log.openFileRequests().subscribe((path) => void this.openPath(path));
+
+    // Open a file passed on the command line at first launch.
+    try {
+      const startup = await this.log.getStartupFile();
+      if (startup) await this.openPath(startup);
+    } catch {
+      /* no startup file or backend unavailable (web preview) */
+    }
+  }
 
   async onOpenFile(): Promise<void> {
     try {

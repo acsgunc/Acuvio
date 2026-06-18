@@ -20,6 +20,40 @@ export class LogService {
     return invoke<void>('close_log', { fileId });
   }
 
+  /**
+   * A file path the app was launched with (e.g. via the Windows
+   * "Open with Acuvio" context-menu entry). Resolves to `null` if none.
+   * The value is consumed once: a second call returns `null`.
+   */
+  getStartupFile(): Promise<string | null> {
+    return invoke<string | null>('get_startup_file');
+  }
+
+  /**
+   * Emits a path whenever the OS asks an already-running Acuvio to open a
+   * file (e.g. the context menu while a window is open). Completes on
+   * unsubscribe.
+   */
+  openFileRequests(): Observable<string> {
+    return new Observable<string>((subscriber) => {
+      let unlisten: UnlistenFn | undefined;
+      let closed = false;
+
+      listen<string>('open-file', (event) => subscriber.next(event.payload)).then((fn) => {
+        if (closed) {
+          fn();
+        } else {
+          unlisten = fn;
+        }
+      });
+
+      return () => {
+        closed = true;
+        unlisten?.();
+      };
+    });
+  }
+
   /** Current known line count (grows as indexing/tailing proceeds). */
   getLineCount(fileId: string): Promise<number> {
     return invoke<number>('get_line_count', { fileId });

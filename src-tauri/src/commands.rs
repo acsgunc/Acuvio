@@ -59,6 +59,13 @@ pub fn close_log(state: State<AppState>, file_id: String) {
     state.remove_file(&file_id);
 }
 
+/// Return (and clear) any file path the app was asked to open at launch,
+/// e.g. via the Windows "Open with Acuvio" context-menu entry.
+#[tauri::command]
+pub fn get_startup_file(state: State<AppState>) -> Option<String> {
+    state.take_startup_file()
+}
+
 #[tauri::command]
 pub fn get_line_count(state: State<AppState>, file_id: String) -> Result<u64, String> {
     state

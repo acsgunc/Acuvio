@@ -126,6 +126,27 @@ artifact and its size when the build finishes).
 Installer metadata (publisher, copyright, license, per-OS settings) lives in
 the `bundle` section of [`src-tauri/tauri.conf.json`](src-tauri/tauri.conf.json).
 
+### Windows context-menu integration
+
+The Windows installer registers an **"Open with Acuvio"** entry on the
+right-click context menu for common log/text file types
+(`.log`, `.txt`, `.out`, `.err`, `.json`, `.ndjson`, `.csv`). Right-click any
+such file and choose **Open with Acuvio** (under *Show more options* on
+Windows 11) to open it directly — if Acuvio is already running it opens in a
+new tab instead of launching a second window.
+
+This is implemented without hijacking the default file association (it adds a
+secondary verb under `SystemFileAssociations`), and is removed automatically on
+uninstall. The registry logic lives in
+[`src-tauri/installer-hooks.nsh`](src-tauri/installer-hooks.nsh), wired in via
+`bundle.windows.nsis.installerHooks`. Command-line file opening is handled in
+the Rust backend ([`src-tauri/src/lib.rs`](src-tauri/src/lib.rs)) using the
+single-instance plugin.
+
+> On macOS/Linux the same single-instance handling applies; associate file
+> types through `bundle.fileAssociations` in `tauri.conf.json` if you want an
+> equivalent "Open with" entry there.
+
 **Per-OS prerequisites**
 
 - **Windows:** WiX (for MSI) and NSIS are downloaded automatically by Tauri on
@@ -192,6 +213,7 @@ acuvio/
 │   │   ├── tailer.rs          # notify-based live tailing -> events
 │   │   └── state.rs           # open files + active tailers
 │   ├── capabilities/default.json
+│   ├── installer-hooks.nsh    # NSIS hooks: "Open with Acuvio" context menu
 │   ├── Cargo.toml
 │   └── tauri.conf.json        # frontendDist = "../dist/acuvio/browser"
 ├── src/                       # Angular frontend
@@ -206,9 +228,28 @@ acuvio/
 │   │   ├── app.component.*    # tabbed shell
 │   │   └── models.ts
 │   └── styles.scss
-├── scripts/                   # icon + sample-log generators
+├── scripts/                   # build/maintenance helpers (see below)
 └── package.json
 ```
+
+---
+
+## Scripts
+
+All project automation lives in `scripts/` and is kept under version control so
+the same workflows are reproducible on any machine and OS:
+
+| Script | Purpose | Run via |
+| --- | --- | --- |
+| [`build-installer.mjs`](scripts/build-installer.mjs) | Build native installers for the current OS (NSIS/MSI, DMG/.app, deb/rpm/AppImage) | `npm run app:installer` |
+| [`update-deps.mjs`](scripts/update-deps.mjs) | Cross-platform npm + Cargo dependency updater with verify step | `npm run update[:check\|:latest]` |
+| [`update.sh`](scripts/update.sh) / [`update.ps1`](scripts/update.ps1) / [`update.cmd`](scripts/update.cmd) | Per-OS launchers for the updater | `./scripts/update.sh` etc. |
+| [`generate-icon.mjs`](scripts/generate-icon.mjs) | Generate the source app icon | `node scripts/generate-icon.mjs` |
+| [`generate-sample-log.mjs`](scripts/generate-sample-log.mjs) | Create / append large sample logs for perf testing | `node scripts/generate-sample-log.mjs 1000` |
+
+The Windows context-menu registration is **not** a script — it is baked into
+the installer via [`src-tauri/installer-hooks.nsh`](src-tauri/installer-hooks.nsh),
+so it applies automatically whenever an installer is built.
 
 ---
 
