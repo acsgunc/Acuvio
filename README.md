@@ -100,6 +100,46 @@ Bundles per platform:
 
 ---
 
+## Production installers
+
+A cross-platform helper auto-detects the host OS and builds the right native
+installers for it (Tauri cannot cross-compile installers, so run it on each
+target OS or in CI):
+
+```bash
+npm run app:installer           # all installers for the current OS
+
+# Per-OS shortcuts:
+npm run app:installer:win       # NSIS (.exe) + MSI (.msi)
+npm run app:installer:mac       # DMG (.dmg) + .app
+npm run app:installer:linux     # .deb + .rpm + AppImage
+
+# Or pick specific bundles / a quick debug build:
+node scripts/build-installer.mjs --bundles nsis
+node scripts/build-installer.mjs --debug
+node scripts/build-installer.mjs --help
+```
+
+Output lands in `src-tauri/target/release/bundle/` (the script lists each
+artifact and its size when the build finishes).
+
+Installer metadata (publisher, copyright, license, per-OS settings) lives in
+the `bundle` section of [`src-tauri/tauri.conf.json`](src-tauri/tauri.conf.json).
+
+**Per-OS prerequisites**
+
+- **Windows:** WiX (for MSI) and NSIS are downloaded automatically by Tauri on
+  the first build. For signed installers, set `WINDOWS_CERTIFICATE` /
+  `WINDOWS_CERTIFICATE_PASSWORD` or configure `bundle.windows.signCommand`.
+- **macOS:** Xcode command-line tools. For distribution, code-sign and notarize
+  via `APPLE_SIGNING_IDENTITY` and the `bundle.macOS` signing settings.
+- **Linux:** `libwebkit2gtk-4.1-dev`, `build-essential`, `libssl-dev`,
+  `libayatana-appindicator3-dev`, `librsvg2-dev` (AppImage downloads
+  `linuxdeploy` on first run).
+
+
+---
+
 ## Tests
 
 Rust unit tests cover the indexing and search logic:

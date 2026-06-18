@@ -2,7 +2,7 @@
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Acuvio",
   "version": "0.1.0",
-  "identifier": "com.acuvio.app",
+  "identifier": "com.acuvio.loganalyzer",
   "build": {
     "beforeDevCommand": "npm run start",
     "beforeBuildCommand": "npm run build",
@@ -35,6 +35,43 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "publisher": "Acuvio",
+    "copyright": "Copyright © 2026 Acuvio. All rights reserved.",
+    "category": "DeveloperTool",
+    "homepage": "https://github.com/acuvio/acuvio",
+    "shortDescription": "High-performance log analyzer for multi-gigabyte files.",
+    "longDescription": "Acuvio is a high-performance, Notepad++-style log analyzer for multi-gigabyte log files with live tailing, memory-mapped reading, regex/literal search, filtering and severity highlighting.",
+    "licenseFile": "../LICENSE",
+    "windows": {
+      "nsis": {
+        "installMode": "perMachine",
+        "languages": ["English"],
+        "displayLanguageSelector": false,
+        "installerIcon": "icons/icon.ico"
+      },
+      "wix": {
+        "language": "en-US"
+      }
+    },
+    "macOS": {
+      "minimumSystemVersion": "10.15",
+      "dmg": {
+        "appPosition": { "x": 180, "y": 170 },
+        "applicationFolderPosition": { "x": 480, "y": 170 },
+        "windowSize": { "width": 660, "height": 400 }
+      }
+    },
+    "linux": {
+      "deb": {
+        "depends": ["libwebkit2gtk-4.1-0", "libgtk-3-0"]
+      },
+      "rpm": {
+        "depends": ["webkit2gtk4.1", "gtk3"]
+      },
+      "appimage": {
+        "bundleMediaFramework": false
+      }
+    }
   }
 }
