@@ -96,7 +96,7 @@ impl LogFile {
     }
 
     /// Snapshot of how many bytes have been indexed so far.
-    #[cfg_attr(not(test), allow(dead_code))]
+    #[allow(dead_code)]
     pub fn indexed_bytes(&self) -> u64 {
         self.index.read().unwrap().indexed_bytes
     }

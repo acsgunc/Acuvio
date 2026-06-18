@@ -37,8 +37,8 @@ Signals, zoneless) + **CodeMirror 6** (virtualized text rendering).
 
 ## Prerequisites
 
-- **Node.js 18+** and npm
-- **Rust** (stable) via [rustup](https://rustup.rs)
+- **Node.js 22.22+ / 24.15+ / 26+** and npm (required by Angular 22)
+- **Rust** (stable, 1.85+ for edition 2024) via [rustup](https://rustup.rs)
 - Platform build dependencies for Tauri 2 — see the
   [Tauri prerequisites guide](https://tauri.app/start/prerequisites/):
   - **Windows:** Microsoft C++ Build Tools + WebView2 (preinstalled on Win 11).
