@@ -1,0 +1,87 @@
+<div class="app-shell">
+  <app-toolbar
+    [hasFile]="!!activeTab()"
+    [follow]="activeTab()?.follow ?? false"
+    [searchOpen]="searchOpen()"
+    [filterOpen]="filterOpen()"
+    (openFile)="onOpenFile()"
+    (toggleFollow)="toggleFollow()"
+    (toggleSearch)="toggleSearch()"
+    (toggleFilter)="toggleFilter()"
+    (goToTop)="goToTop()"
+    (goToEnd)="goToEnd()"
+  ></app-toolbar>
+
+  @if (tabs().length) {
+    <div class="tab-strip" role="tablist">
+      @for (tab of tabs(); track tab.meta.fileId; let i = $index) {
+        <div
+          class="tab"
+          role="tab"
+          [class.active]="i === activeIndex()"
+          (click)="selectTab(i)"
+          [title]="tab.meta.path"
+        >
+          <span class="name">{{ tab.meta.path.split('/').pop()?.split('\\')?.pop() }}</span>
+          <button class="close" (click)="closeTab(i, $event)" title="Close tab">✕</button>
+        </div>
+      }
+    </div>
+  }
+
+  @if (searchOpen() && activeTab()) {
+    <app-search-panel
+      [busy]="activeTab()!.searchBusy"
+      [total]="activeTab()!.matches.length"
+      [current]="activeTab()!.matchIndex"
+      (search)="onSearch($event)"
+      (next)="nextMatch()"
+      (prev)="prevMatch()"
+      (close)="closeSearch()"
+    ></app-search-panel>
+  }
+
+  @if (filterOpen() && activeTab()) {
+    <app-filter-panel
+      [busy]="activeTab()!.filterBusy"
+      [active]="activeTab()!.filterActive"
+      [matched]="activeTab()!.filterMatched"
+      (filter)="onFilter($event)"
+      (clear)="clearFilter()"
+      (close)="closeFilter()"
+    ></app-filter-panel>
+  }
+
+  <div class="viewer-area">
+    @if (activeTab(); as tab) {
+      <app-log-viewer
+        #viewer
+        [fileId]="tab.meta.fileId"
+        [totalLines]="tab.lineCount"
+        [follow]="tab.follow"
+        (topLineChange)="onTopLineChange($event)"
+      ></app-log-viewer>
+    } @else {
+      <div class="empty-state">
+        <div class="logo">Acuvio</div>
+        <p>Sharp clarity for massive logs.</p>
+        <button (click)="onOpenFile()">📂 Open a log file</button>
+      </div>
+    }
+  </div>
+
+  <app-status-bar
+    [filePath]="activeTab()?.meta?.path ?? null"
+    [size]="activeTab()?.meta?.size ?? 0"
+    [lines]="activeTab()?.lineCount ?? 0"
+    [current]="activeTab()?.currentLine ?? 0"
+    [fileEncoding]="activeTab()?.meta?.encoding ?? 'UTF-8'"
+    [isIndexing]="activeTab()?.indexing ?? false"
+    [indexed]="activeTab()?.indexedLines ?? 0"
+    [isTailing]="activeTab()?.tailing ?? false"
+  ></app-status-bar>
+
+  @if (errorMsg(); as msg) {
+    <div class="toast error">{{ msg }}</div>
+  }
+</div>

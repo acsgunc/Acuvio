@@ -1,0 +1,144 @@
+:root {
+  /* Acuvio dark theme palette */
+  --bg: #1e1e1e;
+  --bg-elevated: #252526;
+  --bg-panel: #2d2d30;
+  --bg-input: #3c3c3c;
+  --border: #3e3e42;
+  --border-strong: #555;
+  --fg: #d4d4d4;
+  --fg-dim: #9a9a9a;
+  --accent: #2b88d8;
+  --accent-hover: #3a98e8;
+  --error: #f14c4c;
+  --warn: #d7a23b;
+  --info: #4ec9b0;
+  --debug: #888;
+  --selection: #264f78;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-size: 13px;
+  color: var(--fg);
+  background: var(--bg);
+  overflow: hidden;
+  user-select: none;
+}
+
+button {
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--fg);
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 4px 10px;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: var(--border);
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  &.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+}
+
+input[type='text'],
+input[type='search'],
+input[type='number'] {
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--fg);
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 4px 8px;
+  outline: none;
+
+  &:focus {
+    border-color: var(--accent);
+  }
+}
+
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+::-webkit-scrollbar-thumb {
+  background: #4a4a4a;
+  border-radius: 6px;
+  border: 2px solid var(--bg);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #5a5a5a;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ---- CodeMirror log severity highlighting ---- */
+.cm-editor {
+  height: 100%;
+}
+.cm-scroller {
+  font-family: 'Cascadia Code', 'Consolas', 'Menlo', monospace;
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+.acu-level-error {
+  color: var(--error);
+  font-weight: 600;
+}
+.acu-level-warn {
+  color: var(--warn);
+  font-weight: 600;
+}
+.acu-level-info {
+  color: var(--info);
+}
+.acu-level-debug {
+  color: var(--debug);
+}
+.acu-level-trace {
+  color: #6a6a6a;
+}
+.acu-timestamp {
+  color: #569cd6;
+}
+.acu-ip {
+  color: #c586c0;
+}
+.acu-number {
+  color: #b5cea8;
+}
+.acu-search-match {
+  background: rgba(215, 162, 59, 0.35);
+  outline: 1px solid rgba(215, 162, 59, 0.6);
+  border-radius: 2px;
+}
+.acu-search-active {
+  background: rgba(241, 76, 76, 0.5);
+  outline: 1px solid #f14c4c;
+  border-radius: 2px;
+}
