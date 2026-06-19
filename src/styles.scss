@@ -15,6 +15,34 @@
   --info: #4ec9b0;
   --debug: #888;
   --selection: #264f78;
+  /* Syntax/log accent colors (overridable per theme) */
+  --syn-timestamp: #569cd6;
+  --syn-ip: #c586c0;
+  --syn-number: #b5cea8;
+  --syn-trace: #6a6a6a;
+}
+
+/* Acuvio light theme palette */
+:root[data-theme='light'] {
+  --bg: #ffffff;
+  --bg-elevated: #f3f3f3;
+  --bg-panel: #e8e8e8;
+  --bg-input: #ffffff;
+  --border: #cccccc;
+  --border-strong: #b0b0b0;
+  --fg: #1f1f1f;
+  --fg-dim: #6a6a6a;
+  --accent: #1a73c7;
+  --accent-hover: #1565b0;
+  --error: #c41a1a;
+  --warn: #9a6a00;
+  --info: #0a7c6e;
+  --debug: #777;
+  --selection: #add6ff;
+  --syn-timestamp: #0451a5;
+  --syn-ip: #a31515;
+  --syn-number: #098658;
+  --syn-trace: #909090;
 }
 
 * {
@@ -121,16 +149,16 @@ input[type='number'] {
   color: var(--debug);
 }
 .acu-level-trace {
-  color: #6a6a6a;
+  color: var(--syn-trace);
 }
 .acu-timestamp {
-  color: #569cd6;
+  color: var(--syn-timestamp);
 }
 .acu-ip {
-  color: #c586c0;
+  color: var(--syn-ip);
 }
 .acu-number {
-  color: #b5cea8;
+  color: var(--syn-number);
 }
 .acu-search-match {
   background: rgba(215, 162, 59, 0.35);

@@ -1,0 +1,308 @@
+# Acuvio — Development Document
+
+> **Goal:** Evolve **Acuvio** (a Tauri 2 + Angular + CodeMirror 6 log analyzer)
+> into a modern text/code editor with **feature parity with Notepad++**, while
+> preserving the existing architecture wherever practical.
+
+This document is the single source of truth for the feature roadmap. It captures
+**every feature** requested in [`Prompt.md`](../Prompt.md), maps each one to the
+**current state** of the Acuvio codebase, and tracks progress.
+
+- Status legend: ✅ Done · 🟡 Partial · ⬜ Not started
+
+---
+
+## 1. Architecture Overview
+
+| Layer | Technology | Responsibility |
+| --- | --- | --- |
+| **Backend** | Rust + Tauri 2 | File I/O, indexing, search, tailing — all heavy work off the UI thread. |
+| **Frontend** | Angular 22 (standalone, Signals, zoneless) | UI, state, view orchestration. |
+| **Editor** | CodeMirror 6 | Virtualized text rendering of a sliding window. |
+| **IPC** | Tauri commands + events | Frontend requests chunks; backend streams results/tail. |
+
+### Key backend modules (`src-tauri/src/`)
+
+| File | Responsibility |
+| --- | --- |
+| `commands.rs` | Tauri command handlers (open, read window, search, etc.). |
+| `indexer.rs` | Background byte-offset line index for O(1) line seeks. |
+| `log_file.rs` | Memory-mapped file model (`memmap2`). |
+| `search.rs` | ripgrep-based search (`grep-searcher` + `grep-regex`). |
+| `tailer.rs` | `notify`-based live tailing of appended bytes. |
+| `state.rs` | Shared app/session state. |
+| `lib.rs` / `main.rs` | App bootstrap & command registration. |
+
+### Key frontend modules (`src/app/`)
+
+| Path | Responsibility |
+| --- | --- |
+| `components/log-viewer/` | CodeMirror host, highlighting, search highlight. |
+| `components/toolbar/` | Top toolbar actions. |
+| `components/filter-panel/` | Include/exclude filtering UI. |
+| `components/search-panel/` | Search UI. |
+| `components/status-bar/` | Size, line count, position, encoding indicators. |
+| `services/log.service.ts` | Open/read window, line index access. |
+| `services/search.service.ts` | Search orchestration. |
+| `services/tail.service.ts` | Live follow mode. |
+| `models.ts` | Shared TypeScript models. |
+
+---
+
+## 2. Feature Matrix (mapped to Prompt.md)
+
+### Phase 2 — Core Editor Features
+
+| Feature | Status | Notes / Where |
+| --- | --- | --- |
+| Multiple document interface (tabs) | 🟡 | Multiple files in tabs exist for read-only log viewing; needs full editable docs. |
+| Open / Save / Save As | 🟡 | Open implemented; Save/Save As needed (currently read-only viewer). |
+| Auto Save | ⬜ | New setting + debounced writer. |
+| Session restore | 🟡 | Partial state in `state.rs`; persist open tabs + cursor. |
+| Recent files | ⬜ | Store in settings; surface in menu. |
+| Drag & Drop | ⬜ | Tauri file-drop event → open. |
+| File change detection | 🟡 | `tailer.rs` watches via `notify`; extend to external-edit prompts. |
+| Read-only mode | ✅ | Current default viewer behavior. |
+| Encoding detection (UTF‑8/16, ANSI) | 🟡 | Status bar shows encoding; add detection + conversion. |
+| Line endings (CRLF/LF/CR) | ⬜ | Detect + convert + display. |
+| Zoom | ✅ | Toolbar A−/A+/reset → CodeMirror font-size compartment; persisted. |
+| Word Wrap | ✅ | Toolbar toggle → `EditorView.lineWrapping` compartment; persisted. |
+| Minimap | ⬜ | Optional CM6 minimap extension. |
+| Line numbers | ✅ | CodeMirror gutter. |
+| Code folding | ⬜ | `@codemirror/language` fold service. |
+| Bookmark lines | ⬜ | Gutter marker + nav. |
+| Goto line | ✅ | Toolbar line input → O(1) `goToLine` seek. |
+| Goto symbol | ⬜ | Requires outline/symbol provider. |
+| Split editor (H/V) | ⬜ | Multi-pane layout. |
+
+### Phase 3 — Editing Features
+
+| Feature | Status | Notes |
+| --- | --- | --- |
+| Undo / Redo (multi-level) | ⬜ | CM6 history (needs editable mode). |
+| Multi-cursor editing | ⬜ | CM6 supports natively once editable. |
+| Column / rectangular selection | ⬜ | CM6 `rectangularSelection`. |
+| Multiple selections | ⬜ | CM6 native. |
+| Duplicate line | ⬜ | CM6 command. |
+| Move line up/down | ⬜ | CM6 `moveLineUp/Down`. |
+| Join / split lines | ⬜ | Custom commands. |
+| Delete line | ⬜ | CM6 `deleteLine`. |
+| Trim whitespace | ⬜ | Custom transaction. |
+| Convert tabs/spaces | ⬜ | Custom command. |
+| Auto / smart indentation | ⬜ | `indentOnInput` + language indent. |
+| Auto-closing brackets/quotes | ⬜ | `@codemirror/autocomplete` closeBrackets. |
+| Smart Home/End, Smart Backspace | ⬜ | CM6 keymap. |
+| Incremental search | 🟡 | Search exists; add incremental-as-you-type. |
+
+### Phase 4 — Search
+
+| Feature | Status | Notes |
+| --- | --- | --- |
+| Find / Replace | 🟡 | Find via `search.rs`; Replace needs editable docs. |
+| Find / Replace in files | 🟡 | ripgrep backend can extend to multi-file. |
+| Regular expressions | ✅ | `grep-regex`. |
+| Whole word / Match case | 🟡 | Case toggle present; add whole-word. |
+| Mark matches / Highlight all | ✅ | `search-highlight.ts`. |
+| Search history | ⬜ | Persist queries. |
+| Search across project | ⬜ | Needs workspace/folder context. |
+| Search results panel | 🟡 | `search-panel`; extend to grouped file results. |
+
+### Phase 5 — Syntax Highlighting
+
+| Languages | Status | Notes |
+| --- | --- | --- |
+| C / C++ / C# / Java | ⬜ | Lezer/legacy modes per language. |
+| JS / TS | ⬜ | `@codemirror/lang-javascript`. |
+| Python / Go / Rust | ⬜ | Respective CM6 lang packages. |
+| HTML / XML / JSON / YAML / SQL / CSS | ⬜ | CM6 lang packages. |
+| Markdown / PowerShell / Bash | ⬜ | CM6 lang / legacy modes. |
+| Pluggable language registry | ⬜ | Design a `LanguageRegistry` service so new langs register without core edits. |
+| Log severity highlighting | ✅ | `log-highlight.ts` (ERROR/WARN/INFO/DEBUG/TRACE, timestamps, IPs, numbers). |
+
+### Phase 6 — Code Editing Features
+
+| Feature | Status | Notes |
+| --- | --- | --- |
+| Bracket matching / brace highlight | ⬜ | `bracketMatching()`. |
+| Auto completion | ⬜ | `@codemirror/autocomplete`. |
+| IntelliSense-ready architecture | ⬜ | Define a `CompletionProvider` interface. |
+| Snippets | ⬜ | CM6 snippet support. |
+| Parameter hints | ⬜ | Tooltip provider. |
+| Code / symbol navigation | ⬜ | Symbol provider + goto. |
+| Folding by syntax | ⬜ | Language fold service. |
+| Outline view | ⬜ | Sidebar panel from symbol provider. |
+
+### Phase 7 — File Explorer
+
+| Feature | Status | Notes |
+| --- | --- | --- |
+| Folder tree | ⬜ | New sidebar component + Rust dir-walk command. |
+| Workspace / multiple folders | ⬜ | Workspace model in `state.rs`. |
+| File filtering / search | ⬜ | Glob filter. |
+| Rename / Delete / Move | ⬜ | Tauri fs commands. |
+| New File / New Folder | ⬜ | fs commands. |
+| Refresh | ⬜ | Re-walk + diff. |
+| Drag & Drop | ⬜ | Tree DnD. |
+
+### Phase 8 — Plugin Architecture
+
+| Feature | Status | Notes |
+| --- | --- | --- |
+| Plugin discovery / load / unload | ⬜ | Manifest-based plugin dir scan. |
+| Commands / menus / tool windows | ⬜ | Contribution points. |
+| Event subscriptions | ⬜ | Pub/sub event bus. |
+| Editor interaction API | ⬜ | Stable, versioned plugin API surface. |
+
+### Phase 9 — UI Improvements
+
+| Feature | Status | Notes |
+| --- | --- | --- |
+| Dockable panels | ⬜ | Layout manager. |
+| Dark / Light mode | ✅ | Toolbar 🌙/☀️ toggle → `data-theme` on root; CSS-variable themes; persisted. |
+| Custom / icon themes | ⬜ | Theme registry. |
+| Configurable toolbar | 🟡 | `toolbar` exists; make config-driven. |
+| Status bar | ✅ | `status-bar.component.ts`. |
+| Command palette | ⬜ | Quick-open command registry. |
+| Keyboard shortcut customization | ⬜ | Keymap settings. |
+| Context menus | ⬜ | Right-click contributions. |
+| Responsive layout | 🟡 | Improve panel resizing. |
+
+### Phase 10 — Productivity Features
+
+| Feature | Status | Notes |
+| --- | --- | --- |
+| Macro record / playback | ⬜ | Record command stream. |
+| Session / workspace management | 🟡 | Extend `state.rs` persistence. |
+| Favorites / recent projects | ⬜ | Settings store. |
+| Clipboard history | ⬜ | Ring buffer + picker. |
+| Compare documents / diff viewer | ⬜ | Diff engine + side-by-side view. |
+
+### Phase 11 — Advanced Features
+
+| Feature | Status | Notes |
+| --- | --- | --- |
+| Large file support | ✅ | mmap + byte-offset index (`log_file.rs`, `indexer.rs`). |
+| Async file loading | ✅ | Background indexing thread. |
+| Background indexing | ✅ | `indexer.rs`. |
+| Incremental rendering | ✅ | CM6 sliding window. |
+| High-performance scrolling | ✅ | Windowed reads. |
+| Memory optimization | ✅ | OS-paged mmap, never full copy. |
+| Crash recovery / backup / auto recovery | ⬜ | Periodic backup + restore on launch. |
+
+### Phase 12 — Configuration
+
+| Feature | Status | Notes |
+| --- | --- | --- |
+| JSON configuration | 🟡 | `SettingsService` persists JSON to `localStorage`; move to app config dir next. |
+| Import / Export settings | ⬜ | File dialog round-trip. |
+| User / workspace settings | ⬜ | Two-tier merge. |
+| Theme / font / keyboard settings | 🟡 | Theme + font size done via `SettingsService`; keyboard pending. |
+
+### Phase 13 — Architecture Improvements
+
+| Concern | Status | Notes |
+| --- | --- | --- |
+| Separation of concerns | 🟡 | Service-per-domain already; continue. |
+| Testability | 🟡 | Add unit tests (Karma/Jasmine FE, `cargo test` BE). |
+| Extensibility | ⬜ | Registries (language, command, completion, plugin). |
+| Performance | ✅ | Core path already optimized. |
+| Maintainability | 🟡 | Document conventions. |
+| Dependency injection | ✅ | Angular DI. |
+| Modular services | ✅ | `services/` split by domain. |
+
+---
+
+## 3. Recommended Implementation Order
+
+Editing the document model is the unlock for most phases. Suggested sequence:
+
+1. **Editable document model** — make CodeMirror editable + Save/Save As
+   (enables Phase 3, Replace, undo/redo).
+2. **Configuration system** (Phase 12) — needed by nearly every later feature.
+3. **View toggles** — Word Wrap, Zoom, Minimap, Code Folding (Phase 2).
+4. **Syntax highlighting + language registry** (Phase 5).
+5. **Code editing** — bracket match, autocomplete, snippets (Phase 6).
+6. **File Explorer** (Phase 7).
+7. **UI** — command palette, themes, shortcut customization (Phase 9).
+8. **Productivity** — diff, macros, clipboard history (Phase 10).
+9. **Crash recovery / backup** (Phase 11).
+10. **Plugin architecture** (Phase 8) — last, once the API surface is stable.
+
+> **Trade-off note:** Phases 3, 4 (Replace), 6, and 10 depend on an **editable**
+> document model. Acuvio is currently a read-only viewer optimized for GB-scale
+> mmap files. Editing GB files in place is a different problem from editing
+> normal source files. Recommendation: keep the **read-only mmap viewer** for
+> huge logs and add a separate **editable buffer mode** for regular files,
+> selected automatically by file size threshold.
+
+---
+
+## 4. Scripts Reference
+
+All build/maintenance scripts live in [`scripts/`](../scripts/) and are wired
+through `package.json`.
+
+| Script | npm command | Purpose |
+| --- | --- | --- |
+| `generate-icon.mjs` | `node scripts/generate-icon.mjs` | Generate the base app icon (PNG) before `tauri icon`. |
+| `generate-sample-log.mjs` | `node scripts/generate-sample-log.mjs` | Produce a large sample log for testing GB-scale performance. |
+| `build-installer.mjs` | `npm run app:installer` | Build platform installers (NSIS/MSI/DMG/DEB/RPM/AppImage). |
+| `update-deps.mjs` | `npm run update` / `:check` / `:latest` | Cross-platform npm + Cargo dependency updater (see [`UPDATING.md`](UPDATING.md)). |
+| `update.cmd` / `update.ps1` / `update.sh` | — | OS-specific launchers for the updater. |
+
+### npm scripts (from `package.json`)
+
+| Command | Action |
+| --- | --- |
+| `npm start` | `ng serve` — web-only UI (no backend commands). |
+| `npm run dev` | `tauri dev` — full app with hot reload. |
+| `npm run build` | `ng build` — frontend production build. |
+| `npm test` | `ng test` — Karma/Jasmine unit tests. |
+| `npm run app:build` | `tauri build` — production app bundle. |
+| `npm run app:build:debug` | Debug bundle. |
+| `npm run app:installer[:win/:mac/:linux]` | Platform installers. |
+| `npm run update[:check/:latest]` | Dependency maintenance. |
+
+### Backend tests / checks
+
+```bash
+cargo test     # run Rust unit tests (from src-tauri/)
+cargo check    # type-check without building
+```
+
+---
+
+## 5. Delivery Process (per Prompt.md)
+
+For every feature/phase the workflow is:
+
+1. Explain the implementation plan.
+2. Explain architectural decisions & trade-offs.
+3. Implement the code (extend, don't rewrite).
+4. Update affected files.
+5. Add tests where applicable (Jasmine FE, `cargo test` BE).
+6. Provide a summary of changes.
+7. List remaining work.
+
+**Principles:** reuse existing components, follow project conventions, keep
+modules small and DI-friendly, avoid breaking changes, ship production-ready
+increments, and always preserve existing read-only GB-log performance.
+
+---
+
+## 6. Delivered Increments
+
+### Increment 1 — View preferences (Phases 2, 9, 12)
+
+- **Word Wrap** toggle (CodeMirror `lineWrapping` compartment).
+- **Zoom** in / out / reset (font-size theme compartment).
+- **Go to Line** input in the toolbar (uses the existing O(1) line seek).
+- **Light / Dark theme** toggle via `data-theme` on the document root, with a
+  full CSS-variable light palette in [`src/styles.scss`](../src/styles.scss).
+- **Settings persistence** — new
+  [`SettingsService`](../src/app/services/settings.service.ts) stores theme,
+  word wrap, and font size in `localStorage` (first slice of Phase 12).
+
+All preferences survive reloads and apply to the active and future tabs.
+No backend changes were required; the read-only mmap fast path is unchanged.
+

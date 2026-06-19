@@ -4,12 +4,21 @@
     [follow]="activeTab()?.follow ?? false"
     [searchOpen]="searchOpen()"
     [filterOpen]="filterOpen()"
+    [wordWrap]="settings.wordWrap()"
+    [fontSize]="settings.fontSize()"
+    [theme]="settings.theme()"
     (openFile)="onOpenFile()"
     (toggleFollow)="toggleFollow()"
     (toggleSearch)="toggleSearch()"
     (toggleFilter)="toggleFilter()"
     (goToTop)="goToTop()"
     (goToEnd)="goToEnd()"
+    (gotoLine)="onGotoLine($event)"
+    (toggleWrap)="settings.toggleWordWrap()"
+    (zoomIn)="settings.zoomIn()"
+    (zoomOut)="settings.zoomOut()"
+    (zoomReset)="settings.resetZoom()"
+    (toggleTheme)="settings.toggleTheme()"
   ></app-toolbar>
 
   @if (tabs().length) {
@@ -59,6 +68,8 @@
         [fileId]="tab.meta.fileId"
         [totalLines]="tab.lineCount"
         [follow]="tab.follow"
+        [wordWrap]="settings.wordWrap()"
+        [fontSize]="settings.fontSize()"
         (topLineChange)="onTopLineChange($event)"
       ></app-log-viewer>
     } @else {

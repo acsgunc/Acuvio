@@ -25,6 +25,33 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from 
       <span class="sep"></span>
       <button [disabled]="!hasFile" (click)="goToTop.emit()" title="Go to start">⤒ Top</button>
       <button [disabled]="!hasFile" (click)="goToEnd.emit()" title="Go to end">⤓ End</button>
+      <form class="goto" (submit)="onGoto($event)">
+        <input
+          #gotoInput
+          type="number"
+          min="1"
+          [disabled]="!hasFile"
+          placeholder="Line"
+          title="Go to line (Enter)"
+        />
+        <button type="submit" [disabled]="!hasFile" title="Go to line">↪</button>
+      </form>
+      <span class="sep"></span>
+      <button
+        [disabled]="!hasFile"
+        [class.active]="wordWrap"
+        (click)="toggleWrap.emit()"
+        title="Toggle word wrap"
+      >
+        ↩ Wrap
+      </button>
+      <button [disabled]="!hasFile" (click)="zoomOut.emit()" title="Zoom out">A−</button>
+      <button [disabled]="!hasFile" (click)="zoomReset.emit()" title="Reset zoom">{{ fontSize }}px</button>
+      <button [disabled]="!hasFile" (click)="zoomIn.emit()" title="Zoom in">A+</button>
+      <span class="sep"></span>
+      <button (click)="toggleTheme.emit()" [title]="theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'">
+        {{ theme === 'dark' ? '🌙' : '☀️' }}
+      </button>
       <span class="grow"></span>
       <span class="brand">Acuvio</span>
     </div>
@@ -45,6 +72,14 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from 
         background: var(--border);
         margin: 0 2px;
       }
+      .goto {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .goto input {
+        width: 64px;
+      }
       .grow {
         flex: 1;
       }
@@ -63,6 +98,9 @@ export class ToolbarComponent {
   @Input() follow = false;
   @Input() searchOpen = false;
   @Input() filterOpen = false;
+  @Input() wordWrap = false;
+  @Input() fontSize = 13;
+  @Input() theme: 'dark' | 'light' = 'dark';
 
   @Output() openFile = new EventEmitter<void>();
   @Output() toggleFollow = new EventEmitter<void>();
@@ -70,4 +108,20 @@ export class ToolbarComponent {
   @Output() toggleFilter = new EventEmitter<void>();
   @Output() goToTop = new EventEmitter<void>();
   @Output() goToEnd = new EventEmitter<void>();
+  @Output() gotoLine = new EventEmitter<number>();
+  @Output() toggleWrap = new EventEmitter<void>();
+  @Output() zoomIn = new EventEmitter<void>();
+  @Output() zoomOut = new EventEmitter<void>();
+  @Output() zoomReset = new EventEmitter<void>();
+  @Output() toggleTheme = new EventEmitter<void>();
+
+  onGoto(event: Event): void {
+    event.preventDefault();
+    const form = event.target as HTMLFormElement;
+    const input = form.querySelector('input') as HTMLInputElement | null;
+    const line = Number(input?.value);
+    if (Number.isFinite(line) && line >= 1) {
+      this.gotoLine.emit(Math.floor(line));
+    }
+  }
 }

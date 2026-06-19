@@ -13,6 +13,7 @@ import { open as openDialog } from '@tauri-apps/plugin-dialog';
 import { LogService } from './services/log.service';
 import { TailService } from './services/tail.service';
 import { SearchService } from './services/search.service';
+import { SettingsService } from './services/settings.service';
 import type { LogMeta, SearchMatch } from './models';
 
 import { ToolbarComponent } from './components/toolbar/toolbar.component';
@@ -60,6 +61,7 @@ export class AppComponent implements OnInit {
   private readonly log = inject(LogService);
   private readonly tail = inject(TailService);
   private readonly searchSvc = inject(SearchService);
+  readonly settings = inject(SettingsService);
 
   @ViewChild('viewer') viewer?: LogViewerComponent;
 
@@ -202,6 +204,12 @@ export class AppComponent implements OnInit {
   goToEnd(): void {
     const tab = this.activeTab();
     if (tab) void this.viewer?.goToLine(tab.lineCount);
+  }
+
+  onGotoLine(line: number): void {
+    const tab = this.activeTab();
+    if (!tab) return;
+    void this.viewer?.goToLine(Math.max(1, Math.min(line, tab.lineCount)));
   }
 
   onTopLineChange(line: number): void {

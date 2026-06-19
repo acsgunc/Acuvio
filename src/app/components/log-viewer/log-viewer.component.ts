@@ -62,6 +62,32 @@ export class LogViewerComponent implements AfterViewInit, OnDestroy {
   /** When true, viewport sticks to the end of the file (live tail). */
   @Input() follow = false;
 
+  /** Soft-wrap long lines instead of horizontal scrolling. */
+  @Input() set wordWrap(value: boolean) {
+    this._wordWrap = value;
+    if (this.view) {
+      this.view.dispatch({
+        effects: this.wrapCompartment.reconfigure(value ? EditorView.lineWrapping : []),
+      });
+    }
+  }
+  get wordWrap(): boolean {
+    return this._wordWrap;
+  }
+
+  /** Editor font size in pixels (zoom). */
+  @Input() set fontSize(value: number) {
+    this._fontSize = value;
+    if (this.view) {
+      this.view.dispatch({
+        effects: this.fontCompartment.reconfigure(this.makeFontTheme(value)),
+      });
+    }
+  }
+  get fontSize(): number {
+    return this._fontSize;
+  }
+
   @Output() topLineChange = new EventEmitter<number>();
 
   private readonly log = inject(LogService);
@@ -69,6 +95,10 @@ export class LogViewerComponent implements AfterViewInit, OnDestroy {
 
   private view!: EditorView;
   private readonly gutterCompartment = new Compartment();
+  private readonly wrapCompartment = new Compartment();
+  private readonly fontCompartment = new Compartment();
+  private _wordWrap = false;
+  private _fontSize = 13;
 
   private _totalLines = 0;
   /** Absolute (0-based) index of the first line currently held in the doc. */
@@ -92,6 +122,8 @@ export class LogViewerComponent implements AfterViewInit, OnDestroy {
           doc: '',
           extensions: [
             this.gutterCompartment.of(this.makeGutter()),
+            this.wrapCompartment.of(this._wordWrap ? EditorView.lineWrapping : []),
+            this.fontCompartment.of(this.makeFontTheme(this._fontSize)),
             highlightActiveLine(),
             drawSelection(),
             EditorView.editable.of(false),
@@ -132,6 +164,11 @@ export class LogViewerComponent implements AfterViewInit, OnDestroy {
     this.view.dispatch({
       effects: this.gutterCompartment.reconfigure(this.makeGutter()),
     });
+  }
+
+  /** Theme extension that controls only the editor font size (zoom). */
+  private makeFontTheme(px: number) {
+    return EditorView.theme({ '.cm-scroller': { fontSize: `${px}px` } });
   }
 
   /** Replace the whole window with lines centered around `centerLine`. */
