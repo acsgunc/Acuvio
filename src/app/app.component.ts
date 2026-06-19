@@ -416,6 +416,11 @@ export class AppComponent implements OnInit {
       case 'eolLf': this.setEol('lf'); break;
       case 'eolCrlf': this.setEol('crlf'); break;
       case 'eolCr': this.setEol('cr'); break;
+      // Bookmarks (Notepad++ Search → Bookmark)
+      case 'toggleBookmark': ed.toggleBookmark(); break;
+      case 'nextBookmark': ed.nextBookmark(); break;
+      case 'previousBookmark': ed.previousBookmark(); break;
+      case 'clearBookmarks': ed.clearBookmarks(); break;
     }
   }
 

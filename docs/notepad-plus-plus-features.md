@@ -91,7 +91,7 @@ For the per-increment delivery record and the rolled-up parity matrix, see
 | Mark (persistent highlight of matches) | ⛔ Not yet |
 | Change History (jump to modified lines) | ⛔ Not yet |
 | Smart Highlighting / Styling (1st–5th style, jump, copy styled) | ⛔ Not yet |
-| Bookmarks (toggle / next / prev / cut / copy / remove / inverse) | ⛔ Not yet |
+| Bookmarks (toggle / next / prev / cut / copy / remove / inverse) | 🟡 Partial (toggle/next/prev/clear done; cut/copy/remove/inverse pending) |
 | Find characters in range | ⛔ Not yet |
 | Regex (PCRE) + Extended (`\n \r \t`) search | ✅ Done (JS regex in Replace) |
 

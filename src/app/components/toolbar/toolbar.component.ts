@@ -26,6 +26,12 @@ import { DropdownMenuComponent, type MenuItem } from '../dropdown-menu/dropdown-
         [items]="viewMenuItems"
         (action)="viewAction.emit($event)"
       ></app-dropdown-menu>
+      <app-dropdown-menu
+        label="Bookmarks"
+        [disabled]="!isEdit"
+        [items]="bookmarkMenuItems"
+        (action)="editAction.emit($event)"
+      ></app-dropdown-menu>
       <span class="sep"></span>
       <button
         [class.active]="follow"
@@ -209,6 +215,15 @@ export class ToolbarComponent {
     { action: 'eolLf', label: 'EOL → Unix (LF)' },
     { action: 'eolCrlf', label: 'EOL → Windows (CRLF)' },
     { action: 'eolCr', label: 'EOL → Mac (CR)' },
+  ];
+
+  /** Bookmark operations (Notepad++ Search → Bookmark). */
+  readonly bookmarkMenuItems: MenuItem[] = [
+    { action: 'toggleBookmark', label: 'Toggle Bookmark', shortcut: 'Ctrl+F2' },
+    { action: 'nextBookmark', label: 'Next Bookmark', shortcut: 'F2' },
+    { action: 'previousBookmark', label: 'Previous Bookmark', shortcut: 'Shift+F2' },
+    { separator: true },
+    { action: 'clearBookmarks', label: 'Clear All Bookmarks' },
   ];
 
   /** Notepad++-style View menu with checkable render options. */

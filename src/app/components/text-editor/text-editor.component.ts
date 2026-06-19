@@ -27,6 +27,14 @@ import {
 } from '@codemirror/commands';
 import { LanguageRegistry } from '../../services/language-registry.service';
 import {
+  bookmarks,
+  toggleBookmarkEffect,
+  clearBookmarksEffect,
+  bookmarkedLines,
+  nextBookmarkLine,
+  prevBookmarkLine,
+} from '../../editor/bookmarks';
+import {
   SearchQuery,
   setSearchQuery,
   findNext,
@@ -169,12 +177,17 @@ export class TextEditorComponent implements AfterViewInit, OnDestroy {
                 { key: 'Mod-d', run: copyLineDown, preventDefault: true },
                 { key: 'Mod-Shift-k', run: deleteLine, preventDefault: true },
                 { key: 'Mod-/', run: toggleComment, preventDefault: true },
+                // Bookmarks (Notepad++ parity): Ctrl+F2 toggle, F2 next, Shift+F2 prev.
+                { key: 'Mod-F2', run: () => (this.toggleBookmark(), true), preventDefault: true },
+                { key: 'F2', run: () => (this.nextBookmark(), true), preventDefault: true },
+                { key: 'Shift-F2', run: () => (this.previousBookmark(), true), preventDefault: true },
               ]),
             ),
             this.languageCompartment.of(this.pendingLanguage),
             this.wrapCompartment.of(this._wordWrap ? EditorView.lineWrapping : []),
             this.fontCompartment.of(this.makeFontTheme(this._fontSize)),
             this.viewOptionsCompartment.of(this.makeViewOptions(this._viewOptions)),
+            bookmarks(),
             EditorView.theme({
               '&': { height: '100%' },
               '.cm-scroller': { overflow: 'auto' },
@@ -350,6 +363,41 @@ export class TextEditorComponent implements AfterViewInit, OnDestroy {
       return 0; // invalid regex
     }
     return count;
+  }
+
+  // ---- Bookmarks (Notepad++ Search → Bookmark) ----
+
+  /** Toggle a bookmark on the line containing the primary caret. */
+  toggleBookmark(): void {
+    if (!this.view) return;
+    const pos = this.view.state.selection.main.head;
+    this.view.dispatch({ effects: toggleBookmarkEffect.of(pos) });
+    this.view.focus();
+  }
+
+  /** Move the caret to the next bookmarked line (wraps around). */
+  nextBookmark(): void {
+    if (!this.view) return;
+    const lines = bookmarkedLines(this.view.state);
+    const current = this.view.state.doc.lineAt(this.view.state.selection.main.head).number;
+    const target = nextBookmarkLine(lines, current);
+    if (target !== null) this.goToLine(target);
+  }
+
+  /** Move the caret to the previous bookmarked line (wraps around). */
+  previousBookmark(): void {
+    if (!this.view) return;
+    const lines = bookmarkedLines(this.view.state);
+    const current = this.view.state.doc.lineAt(this.view.state.selection.main.head).number;
+    const target = prevBookmarkLine(lines, current);
+    if (target !== null) this.goToLine(target);
+  }
+
+  /** Remove every bookmark in the document. */
+  clearBookmarks(): void {
+    if (!this.view) return;
+    this.view.dispatch({ effects: clearBookmarksEffect.of(null) });
+    this.view.focus();
   }
 
   private recomputeDirty(): void {

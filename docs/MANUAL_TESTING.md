@@ -200,6 +200,20 @@ dropdown menu. Each toggle shows a ✓ when active.
 | View → Dark Theme | Whole UI + syntax colors switch; checkmark reflects dark/light |
 | Close & reopen the app | **All** View toggles persist (stored in `localStorage`) |
 
+### 2.12 Bookmarks (Increment 8)
+
+Open any editable file (e.g. `sample.py` or `edit-ops.txt`). Use the
+**Bookmarks** dropdown or the keyboard shortcuts.
+
+| Step | Expected |
+| --- | --- |
+| Place caret on a line, Ctrl+F2 (or Toggle Bookmark) | A ◆ appears in the bookmark gutter and the line gets a faint blue tint |
+| Toggle again on the same line | Bookmark and tint removed |
+| Bookmark several lines, press F2 | Caret jumps to the next bookmarked line; F2 again advances; wraps to the first after the last |
+| Press Shift+F2 | Caret jumps to the previous bookmark; wraps to the last before the first |
+| Type new lines above a bookmark | The ◆ moves with its line (bookmarks track edits) |
+| Bookmarks → Clear All Bookmarks | All ◆ markers and tints removed |
+
 ---
 
 ## 3. Regression sweep (run before every release)
