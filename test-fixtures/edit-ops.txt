@@ -1,0 +1,10 @@
+banana
+apple
+cherry
+apple
+
+   
+Date  
+	TabIndented
+MixedCase Text Here
+zebra
