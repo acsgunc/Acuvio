@@ -9,6 +9,7 @@ dependencies = [
  "grep-matcher",
  "grep-regex",
  "grep-searcher",
+ "memchr",
  "memmap2",
  "notify",
  "serde",

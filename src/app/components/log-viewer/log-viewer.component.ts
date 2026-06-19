@@ -50,9 +50,17 @@ export class LogViewerComponent implements AfterViewInit, OnDestroy {
   @Input({ required: true }) fileId!: string;
   /** Total line count in the file (provided by parent; may grow over time). */
   @Input() set totalLines(value: number) {
+    const previous = this._totalLines;
     this._totalLines = value;
     if (this.follow) {
       void this.scrollToEnd();
+      return;
+    }
+    // First lines have become available (background indexing) but the initial
+    // window came back empty because it raced ahead of the first index flush.
+    // Refill it now so content appears immediately instead of after a scroll.
+    if (this.view && previous === 0 && value > 0 && this.windowLines === 0 && !this.loading) {
+      void this.reload(0);
     }
   }
   get totalLines(): number {

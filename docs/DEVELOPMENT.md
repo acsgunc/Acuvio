@@ -511,6 +511,26 @@ Full Notepad++ Find dialog for editable documents. Full details:
 
 ---
 
+### Increment 14 — Large-file open performance (Phase 1, GB-scale handling)
+
+Made opening 100 MB – 4 GB logs feel instant. Full details:
+[`features/14-large-file-open-performance.md`](features/14-large-file-open-performance.md).
+
+- **`indexer.rs`** — replaced the byte-by-byte newline scan with SIMD
+  `memchr::memchr_iter`; pre-sizes the index from a sampled average line length;
+  flushes the first batch after 2 000 lines and emits progress immediately so
+  the viewer paints right away (then a 250 k-line cadence).
+- **`log_file.rs`** — `reserve_index` pre-allocates the line-start vector.
+- **`Cargo.toml`** — added `memchr`; `[profile.dev.package."*"] opt-level = 3`
+  so dependencies run at full speed in dev builds.
+- **`log-viewer.component.ts`** — `totalLines` setter refills the first window
+  once background indexing makes lines available (no scroll needed).
+- **Perf:** real 100 MB / 1.46 M-line log indexes in ~44 ms (~2.2 GB/s);
+  ~1.8 s projected for 4 GB, first screen within milliseconds.
+- **Tests:** +3 Rust cases for `estimate_line_count` (**20 Rust**, 79 frontend).
+
+---
+
 ## 7. Notepad++ Parity Matrix
 
 Derived from Notepad++'s own menu command IDs (`PowerEditor/src/menuCmdID.h`,

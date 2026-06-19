@@ -95,6 +95,16 @@ impl LogFile {
         idx.indexed_bytes = scanned_to;
     }
 
+    /// Pre-allocate space for roughly `lines` line-start offsets so the indexer
+    /// avoids repeated reallocations while scanning a multi-GB file.
+    pub fn reserve_index(&self, lines: usize) {
+        let mut idx = self.index.write().unwrap();
+        let have = idx.starts.len();
+        if lines > have {
+            idx.starts.reserve(lines - have);
+        }
+    }
+
     /// Snapshot of how many bytes have been indexed so far.
     #[allow(dead_code)]
     pub fn indexed_bytes(&self) -> u64 {

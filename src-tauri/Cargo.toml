@@ -24,6 +24,8 @@ serde_json = "1"
 # GB-scale file handling
 memmap2 = "0.9"
 notify = "8"
+# SIMD-accelerated newline scanning for fast indexing of multi-GB files.
+memchr = "2"
 
 # ripgrep search engine
 grep-searcher = "0.1"
@@ -41,3 +43,9 @@ codegen-units = 1
 lto = true
 opt-level = "s"
 strip = true
+
+# Optimize third-party crates (memchr, memmap2, grep-*) even in debug/dev builds
+# so large-file indexing and search stay fast when running `npm run dev`, while
+# the app crate itself stays unoptimized for quick incremental rebuilds.
+[profile.dev.package."*"]
+opt-level = 3

@@ -25,6 +25,7 @@ For the high-level roadmap and feature matrix, see
 | 11 | Bookmark Line Operations (copy/cut/remove/keep/inverse) | 4 | [11-bookmark-line-operations.md](11-bookmark-line-operations.md) |
 | 12 | Multi-Color Mark Styles (5 independent highlight colors) | 4 | [12-mark-styles.md](12-mark-styles.md) |
 | 13 | Find / Replace / Mark Dialog (Ctrl+F, full Notepad++ option matrix) | 4 | [13-find-dialog.md](13-find-dialog.md) |
+| 14 | Large-File Open Performance (memchr indexing, instant first paint) | 1 | [14-large-file-open-performance.md](14-large-file-open-performance.md) |
 
 > Feature scope is guided by a catalog of Notepad++'s own menu commands, so we
 > track parity rather than missing features. The full catalog with per-feature

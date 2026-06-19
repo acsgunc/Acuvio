@@ -306,6 +306,22 @@ Open an editable file with repeated words (e.g. several `foo`/`FOO`). Press
 
 ---
 
+### Feature 14 — Large-file open performance
+
+Generate or use real large logs (e.g. `npm run sample-log -- 100`, or a
+multi-GB file). The editable path is only for files ≤ 50 MiB; larger files use
+the read-only viewer.
+
+| Action | Expected |
+| --- | --- |
+| Open a ~100 MB log | First screen of lines appears within a moment (no blank editor / no multi-second hang) |
+| Open a multi-GB log | First screen paints quickly; the line count / scrollbar grows as background indexing completes (~1–2 s for ~4 GB) |
+| Scroll immediately after opening a large file | Lines load smoothly; the window keeps up while indexing continues |
+| Open a file ≤ 50 MiB | Opens in editable mode (not the viewer) as before |
+| Status bar line count while a huge file indexes | Climbs as `index-progress` events arrive, then settles at the final total |
+
+---
+
 ## 3. Regression sweep (run before every release)
 
 1. `npm run build` — production bundle succeeds.
