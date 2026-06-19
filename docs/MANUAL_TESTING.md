@@ -261,6 +261,22 @@ Ctrl+F2 first.
 
 ---
 
+### 2.16 Multi-color mark styles (Increment 12)
+
+Open any text file with repeated words.
+
+| Step | Expected |
+| --- | --- |
+| Select a word, Search → Mark Selection — Style 1 | All occurrences highlight yellow |
+| Select a different word, Search → Mark Selection — Style 2 | Those occurrences highlight green; the yellow ones remain |
+| Repeat with Styles 3/4/5 on other words | Cyan / magenta / orange highlights coexist |
+| Edit the document (add another occurrence) | New occurrences pick up the same color automatically |
+| Search → Clear All Marks | All colored highlights disappear |
+| Find & Replace bar → ⭐ Mark | The find term highlights in yellow (style 1) |
+| Find & Replace bar → Clear | Every mark color is cleared |
+
+---
+
 ## 3. Regression sweep (run before every release)
 
 1. `npm run build` — production bundle succeeds.

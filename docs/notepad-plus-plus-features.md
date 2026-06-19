@@ -90,7 +90,7 @@ For the per-increment delivery record and the rolled-up parity matrix, see
 | Bookmark: cut / copy / remove bookmarked lines | ✅ Done |
 | Bookmark: remove unbookmarked lines / inverse | ✅ Done |
 | Brace matching (go to / select between) | ✅ Done |
-| Mark (persistent highlight of matches) | 🟡 Partial (single-style mark all + clear done; 1st–5th multi-color styles & jump pending) |
+| Mark (persistent highlight of matches) | ✅ Done (5 independent color styles + clear all) |
 | Change History (jump to modified lines) | ⛔ Not yet |
 | Smart Highlighting / Styling (1st–5th style, jump, copy styled) | ⛔ Not yet |
 | Bookmarks (toggle / next / prev / cut / copy / remove / inverse) | 🟡 Partial (toggle/next/prev/clear done; cut/copy/remove/inverse pending) |

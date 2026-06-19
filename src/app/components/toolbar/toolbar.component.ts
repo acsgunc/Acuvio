@@ -230,6 +230,13 @@ export class ToolbarComponent {
     { action: 'removeNonBookmarkedLines', label: 'Remove Unbookmarked Lines' },
     { action: 'inverseBookmarks', label: 'Inverse Bookmarks' },
     { separator: true },
+    { action: 'markStyle1', label: 'Mark Selection — Style 1 (yellow)' },
+    { action: 'markStyle2', label: 'Mark Selection — Style 2 (green)' },
+    { action: 'markStyle3', label: 'Mark Selection — Style 3 (cyan)' },
+    { action: 'markStyle4', label: 'Mark Selection — Style 4 (magenta)' },
+    { action: 'markStyle5', label: 'Mark Selection — Style 5 (orange)' },
+    { action: 'clearAllMarks', label: 'Clear All Marks' },
+    { separator: true },
     { action: 'gotoMatchingBrace', label: 'Go to Matching Brace', shortcut: 'Ctrl+B' },
     { action: 'selectToMatchingBrace', label: 'Select to Matching Brace', shortcut: 'Ctrl+Shift+B' },
   ];

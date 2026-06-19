@@ -37,7 +37,7 @@ import {
   partitionByBookmarks,
   invertBookmarks,
 } from '../../editor/bookmarks';
-import { markHighlighter, setMarkEffect, markCount, type MarkOptions } from '../../editor/mark';
+import { markHighlighter, setMarkEffect, clearAllMarksEffect, markCount, type MarkOptions } from '../../editor/mark';
 import { findMatchingBracket } from '../../editor/brace-match';
 import {
   SearchQuery,
@@ -477,32 +477,44 @@ export class TextEditorComponent implements AfterViewInit, OnDestroy {
   // ---- Mark (Notepad++ Search → Mark) ----
 
   /**
-   * Persistently highlight every occurrence of `term`. Pass an empty term to
-   * clear. Returns the number of highlighted occurrences.
+   * Persistently highlight every occurrence of `term` in the given style slot
+   * (0..MARK_STYLE_COUNT-1, default 0). Pass an empty term to clear that slot.
+   * Returns the number of highlighted occurrences in the slot.
    */
-  setMark(term: string, options?: Partial<MarkOptions>): number {
+  setMark(term: string, options?: Partial<MarkOptions>, styleIndex = 0): number {
     if (!this.view) return 0;
     const opts: MarkOptions = {
       caseSensitive: options?.caseSensitive ?? false,
       wholeWord: options?.wholeWord ?? false,
       regexp: options?.regexp ?? false,
     };
-    this.view.dispatch({ effects: setMarkEffect.of(term ? { term, options: opts } : null) });
-    return markCount(this.view.state);
+    this.view.dispatch({
+      effects: setMarkEffect.of(term ? { styleIndex, term, options: opts } : { styleIndex, term: '', options: opts }),
+    });
+    return markCount(this.view.state, styleIndex);
   }
 
-  /** Mark the currently selected text (or the word at the caret). */
-  markSelection(options?: Partial<MarkOptions>): number {
+  /** Mark the currently selected text (or the word at the caret) in a style slot. */
+  markSelection(options?: Partial<MarkOptions>, styleIndex = 0): number {
     if (!this.view) return 0;
     const sel = this.view.state.selection.main;
     const term = sel.empty ? this.wordAt(sel.head) : this.view.state.sliceDoc(sel.from, sel.to);
-    return this.setMark(term, options);
+    const count = this.setMark(term, options, styleIndex);
+    this.view.focus();
+    return count;
   }
 
-  /** Clear all mark highlighting. */
-  clearMark(): void {
+  /** Clear one mark style slot (default 0). */
+  clearMark(styleIndex = 0): void {
     if (!this.view) return;
-    this.view.dispatch({ effects: setMarkEffect.of(null) });
+    this.view.dispatch({ effects: setMarkEffect.of({ styleIndex, term: '', options: { caseSensitive: false, wholeWord: false, regexp: false } }) });
+    this.view.focus();
+  }
+
+  /** Clear every mark style. */
+  clearAllMarks(): void {
+    if (!this.view) return;
+    this.view.dispatch({ effects: clearAllMarksEffect.of(null) });
     this.view.focus();
   }
 

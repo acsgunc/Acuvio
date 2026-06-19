@@ -482,6 +482,17 @@ bookmarks. Full details:
 - **Cross-platform one-click launchers:** added `run.command` (macOS),
   `Acuvio.desktop` + `scripts/install-linux-launcher.sh` (Linux).
 
+### Increment 12 — Multi-color mark styles (Phase 4, Notepad++ Search → Mark)
+
+Five independent mark highlight colors + clear-all. Full details:
+[`features/12-mark-styles.md`](features/12-mark-styles.md).
+
+- **`editor/mark.ts`** — `markField` now holds five `MarkSlot`s; `setMarkEffect`
+  carries a `styleIndex`; `clearAllMarksEffect`; five decoration facet entries.
+- **`TextEditorComponent`** — `setMark`/`markSelection`/`clearMark` gain a
+  `styleIndex`; new `clearAllMarks`. Search dropdown exposes Style 1–5.
+- **Tests:** +6 Jasmine cases (**54 total**).
+
 ---
 
 ## 7. Notepad++ Parity Matrix

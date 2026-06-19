@@ -429,6 +429,13 @@ export class AppComponent implements OnInit {
       case 'removeBookmarkedLines': ed.removeBookmarkedLines(); break;
       case 'removeNonBookmarkedLines': ed.removeNonBookmarkedLines(); break;
       case 'inverseBookmarks': ed.inverseBookmarks(); break;
+      // Mark styles (Notepad++ Search → Mark, 5 colors)
+      case 'markStyle1': ed.markSelection(undefined, 0); break;
+      case 'markStyle2': ed.markSelection(undefined, 1); break;
+      case 'markStyle3': ed.markSelection(undefined, 2); break;
+      case 'markStyle4': ed.markSelection(undefined, 3); break;
+      case 'markStyle5': ed.markSelection(undefined, 4); break;
+      case 'clearAllMarks': ed.clearAllMarks(); break;
       // Brace matching (Notepad++ Search → Go to / Select to Matching Brace)
       case 'gotoMatchingBrace': ed.goToMatchingBrace(); break;
       case 'selectToMatchingBrace': ed.selectToMatchingBrace(); break;
@@ -541,7 +548,7 @@ export class AppComponent implements OnInit {
 
   /** Clear all mark highlighting. */
   onClearMark(): void {
-    this.editor?.clearMark();
+    this.editor?.clearAllMarks();
   }
 
   /** Save the active editable tab (prompts for a path if it is untitled). */
