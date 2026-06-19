@@ -18,6 +18,7 @@ For the high-level roadmap and feature matrix, see
 | 4 | Edit Operations (line ops, case, blank ops, EOL) | 3 | [04-edit-operations.md](04-edit-operations.md) |
 | 5 | Find & Replace (find/replace, case/word/regex, count) | 4 | [05-find-replace.md](05-find-replace.md) |
 | 6 | Advanced Line Operations & Insertions (numeric/length sort, randomize, blank-line, date/time, copy path) | 3 | [06-advanced-line-operations.md](06-advanced-line-operations.md) |
+| 7 | View Rendering Options (show whitespace, trailing whitespace, active line, zoom, theme) | 2, 9 | [07-view-rendering-options.md](07-view-rendering-options.md) |
 
 > Feature scope is guided by a catalog of Notepad++'s own menu commands, so we
 > track parity rather than missing features. The full catalog with per-feature

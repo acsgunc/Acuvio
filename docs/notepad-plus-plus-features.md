@@ -101,7 +101,7 @@ For the per-increment delivery record and the rolled-up parity matrix, see
 | --- | --- |
 | Always on Top / Full Screen / Post-It / Distraction Free | ⛔ Not yet |
 | View in Browser (FF / Chrome / Edge / IE) | ➖ N/A |
-| Show Symbol → spaces/tabs, EOL, non-printing, ctrl chars | ⛔ Not yet |
+| Show Symbol → spaces/tabs, EOL, non-printing, ctrl chars | 🟡 Partial (spaces/tabs + trailing whitespace done; EOL/non-printing/ctrl pending) |
 | Show Symbol → indent guide / wrap symbol | ⛔ Not yet |
 | Zoom in / out / restore | ✅ Done (font-size controls) |
 | Multi-View (move/clone to other view; new instance) | ⛔ Not yet |

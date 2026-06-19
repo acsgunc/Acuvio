@@ -410,6 +410,20 @@ details: [`features/06-advanced-line-operations.md`](features/06-advanced-line-o
 - **Manual coverage:** [`MANUAL_TESTING.md`](MANUAL_TESTING.md) §2.10; new
   `numbers.txt` fixture.
 
+### Increment 7 — View rendering options (Phase 2/9, Notepad++ View menu)
+
+Adds a checkable **View** dropdown for display toggles. Full details:
+[`features/07-view-rendering-options.md`](features/07-view-rendering-options.md).
+
+- **`SettingsService`** gains persisted `showWhitespace`, `highlightActiveLine`,
+  `highlightTrailingWhitespace` signals + toggles.
+- **`TextEditorComponent`** maps a `ViewRenderOptions` to a CodeMirror
+  compartment (`highlightWhitespace`/`highlightTrailingWhitespace`; active-line
+  disabled via a transparent theme override since `basicSetup` bakes it in).
+- **`DropdownMenuComponent`** gains a `checked` field rendering a ✓ column; the
+  View menu also hosts Word Wrap, Zoom, and Theme for discoverability.
+- **Manual coverage:** [`MANUAL_TESTING.md`](MANUAL_TESTING.md) §2.11.
+
 ---
 
 ## 7. Notepad++ Parity Matrix
@@ -424,7 +438,7 @@ aren't missed. The **full per-feature catalog** (every menu, with status) lives 
 | **File** | New, Open, Save, Save As, Close, Recent, Session, Print | 🟡 | New/Open/Save/Save As/Close done; recent/session/print/rename pending. |
 | **Edit** | Undo/redo, line ops, case, blank ops, comment, EOL, column mode, clipboard history | 🟡 | Line/case/blank/comment/indent/EOL + numeric/length/case sort, randomize, blank-line insert, insert date/time, copy-path done; column editor, clipboard history pending. |
 | **Search** | Find, Replace, Find in Files, Mark, Incremental, Go to line, Bookmarks, Brace match | 🟡 | Find/Replace (edit, +case/word/regex), filter/regex/go-to-line done; Find-in-Files, Mark, bookmarks, brace-match pending. |
-| **View** | Word wrap, zoom, folding, document map, function list, full screen, split, show symbols | 🟡 | Wrap/zoom/folding (edit) done; minimap, outline, split, full-screen, whitespace symbols pending. |
+| **View** | Word wrap, zoom, folding, document map, function list, full screen, split, show symbols | 🟡 | Wrap/zoom/folding + show-whitespace, trailing-whitespace, active-line toggles (persisted View menu) done; minimap, outline, split, full-screen, EOL symbols pending. |
 | **Encoding** | UTF-8/16, ANSI, convert-to, BOM | 🟡 | Detection + status display done; interactive convert/reload-as pending. |
 | **Language** | 80+ syntaxes, User Defined Language | 🟡 | 18 languages + pluggable registry; UDL system pending. |
 | **Settings** | Preferences, Style Configurator, Shortcut Mapper | 🟡 | Theme/font/wrap settings persisted; full preferences + shortcut mapper pending. |

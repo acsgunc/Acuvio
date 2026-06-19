@@ -14,6 +14,7 @@ import {
 import { basicSetup } from 'codemirror';
 import { Compartment, EditorState, Prec, type Extension } from '@codemirror/state';
 import { EditorView, keymap, type Command } from '@codemirror/view';
+import { highlightWhitespace, highlightTrailingWhitespace } from '@codemirror/view';
 import {
   indentWithTab,
   copyLineDown,
@@ -104,6 +105,23 @@ export class TextEditorComponent implements AfterViewInit, OnDestroy {
     return this._languageId;
   }
 
+  /**
+   * Editor rendering options (Notepad++ View → Show Symbol family). Applied
+   * through a single compartment so they reconfigure live without rebuilding
+   * the view.
+   */
+  @Input() set viewOptions(value: ViewRenderOptions) {
+    this._viewOptions = value;
+    if (this.view) {
+      this.view.dispatch({
+        effects: this.viewOptionsCompartment.reconfigure(this.makeViewOptions(value)),
+      });
+    }
+  }
+  get viewOptions(): ViewRenderOptions {
+    return this._viewOptions;
+  }
+
   /** Emits the document's dirty state whenever it changes. */
   @Output() dirtyChange = new EventEmitter<boolean>();
   /** Emits the 1-based cursor line as the selection moves. */
@@ -116,10 +134,16 @@ export class TextEditorComponent implements AfterViewInit, OnDestroy {
   private readonly wrapCompartment = new Compartment();
   private readonly fontCompartment = new Compartment();
   private readonly languageCompartment = new Compartment();
+  private readonly viewOptionsCompartment = new Compartment();
   private _wordWrap = false;
   private _fontSize = 13;
   private _languageId = '';
   private _dirty = false;
+  private _viewOptions: ViewRenderOptions = {
+    showWhitespace: false,
+    highlightActiveLine: true,
+    highlightTrailingWhitespace: false,
+  };
   /** Pending language extension applied once the view is created. */
   private pendingLanguage: Extension = [];
   /** Document length corresponding to the last saved state. */
@@ -150,6 +174,7 @@ export class TextEditorComponent implements AfterViewInit, OnDestroy {
             this.languageCompartment.of(this.pendingLanguage),
             this.wrapCompartment.of(this._wordWrap ? EditorView.lineWrapping : []),
             this.fontCompartment.of(this.makeFontTheme(this._fontSize)),
+            this.viewOptionsCompartment.of(this.makeViewOptions(this._viewOptions)),
             EditorView.theme({
               '&': { height: '100%' },
               '.cm-scroller': { overflow: 'auto' },
@@ -349,4 +374,37 @@ export class TextEditorComponent implements AfterViewInit, OnDestroy {
   private makeFontTheme(px: number) {
     return EditorView.theme({ '.cm-scroller': { fontSize: `${px}px` } });
   }
+
+  /**
+   * Build the extension set for the current view-render options.
+   *
+   * `highlightWhitespace`/`highlightTrailingWhitespace` are additive. Active-line
+   * highlighting is always present via `basicSetup`, so disabling it is done with
+   * a theme override that makes the highlight transparent rather than by removing
+   * the extension (which a compartment cannot do).
+   */
+  private makeViewOptions(opts: ViewRenderOptions): Extension {
+    const extensions: Extension[] = [];
+    if (opts.showWhitespace) extensions.push(highlightWhitespace());
+    if (opts.highlightTrailingWhitespace) extensions.push(highlightTrailingWhitespace());
+    if (!opts.highlightActiveLine) {
+      extensions.push(
+        EditorView.theme({
+          '.cm-activeLine': { backgroundColor: 'transparent' },
+          '.cm-activeLineGutter': { backgroundColor: 'transparent' },
+        }),
+      );
+    }
+    return extensions;
+  }
+}
+
+/** Editor rendering toggles surfaced through the View menu. */
+export interface ViewRenderOptions {
+  /** Render spaces and tabs as visible glyphs. */
+  showWhitespace: boolean;
+  /** Highlight the line containing the primary caret. */
+  highlightActiveLine: boolean;
+  /** Tint trailing whitespace at line ends. */
+  highlightTrailingWhitespace: boolean;
 }

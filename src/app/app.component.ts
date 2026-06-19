@@ -25,7 +25,7 @@ import { SearchPanelComponent, type SearchRequest } from './components/search-pa
 import { FilterPanelComponent, type FilterRequest } from './components/filter-panel/filter-panel.component';
 import { StatusBarComponent } from './components/status-bar/status-bar.component';
 import { LogViewerComponent } from './components/log-viewer/log-viewer.component';
-import { TextEditorComponent } from './components/text-editor/text-editor.component';
+import { TextEditorComponent, type ViewRenderOptions } from './components/text-editor/text-editor.component';
 import { ReplacePanelComponent, type ReplaceQuery } from './components/replace-panel/replace-panel.component';
 
 /** Per-tab UI + backend state. */
@@ -96,6 +96,13 @@ export class AppComponent implements OnInit {
   private nextEditId = 1;
 
   readonly activeTab = computed<Tab | null>(() => this.tabs()[this.activeIndex()] ?? null);
+
+  /** Editor render options derived from persisted settings. */
+  readonly editorViewOptions = computed<ViewRenderOptions>(() => ({
+    showWhitespace: this.settings.showWhitespace(),
+    highlightActiveLine: this.settings.highlightActiveLine(),
+    highlightTrailingWhitespace: this.settings.highlightTrailingWhitespace(),
+  }));
 
   // ---- file open / close ----
 
@@ -409,6 +416,20 @@ export class AppComponent implements OnInit {
       case 'eolLf': this.setEol('lf'); break;
       case 'eolCrlf': this.setEol('crlf'); break;
       case 'eolCr': this.setEol('cr'); break;
+    }
+  }
+
+  /** Route a View-menu action to the settings store (persisted + reactive). */
+  onViewAction(action: string): void {
+    switch (action) {
+      case 'toggleWrap': this.settings.toggleWordWrap(); break;
+      case 'toggleWhitespace': this.settings.toggleShowWhitespace(); break;
+      case 'toggleTrailingWhitespace': this.settings.toggleHighlightTrailingWhitespace(); break;
+      case 'toggleActiveLine': this.settings.toggleHighlightActiveLine(); break;
+      case 'zoomIn': this.settings.zoomIn(); break;
+      case 'zoomOut': this.settings.zoomOut(); break;
+      case 'zoomReset': this.settings.resetZoom(); break;
+      case 'toggleTheme': this.settings.toggleTheme(); break;
     }
   }
 

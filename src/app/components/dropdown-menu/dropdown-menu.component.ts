@@ -22,6 +22,8 @@ export interface MenuItem {
   separator?: boolean;
   /** When true, the item is shown disabled. */
   disabled?: boolean;
+  /** When defined, render a checkbox-style toggle with this checked state. */
+  checked?: boolean;
 }
 
 /**
@@ -53,6 +55,7 @@ export interface MenuItem {
                 [disabled]="item.disabled"
                 (click)="select(item)"
               >
+                <span class="entry-check">{{ item.checked === undefined ? '' : (item.checked ? '✓' : '') }}</span>
                 <span class="entry-label">{{ item.label }}</span>
                 @if (item.shortcut) {
                   <span class="entry-shortcut">{{ item.shortcut }}</span>
@@ -107,6 +110,15 @@ export interface MenuItem {
       .entry:hover:not(:disabled) {
         background: var(--accent);
         color: #fff;
+      }
+      .entry-check {
+        flex: 0 0 14px;
+        width: 14px;
+        text-align: center;
+        opacity: 0.9;
+      }
+      .entry-label {
+        flex: 1 1 auto;
       }
       .entry-shortcut {
         opacity: 0.6;

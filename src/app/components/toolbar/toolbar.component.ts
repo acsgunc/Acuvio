@@ -21,6 +21,11 @@ import { DropdownMenuComponent, type MenuItem } from '../dropdown-menu/dropdown-
         [items]="editMenuItems"
         (action)="editAction.emit($event)"
       ></app-dropdown-menu>
+      <app-dropdown-menu
+        label="View"
+        [items]="viewMenuItems"
+        (action)="viewAction.emit($event)"
+      ></app-dropdown-menu>
       <span class="sep"></span>
       <button
         [class.active]="follow"
@@ -133,12 +138,17 @@ export class ToolbarComponent {
   @Input() isEdit = false;
   /** True when the active editable document has unsaved changes. */
   @Input() dirty = false;
+  /** View → render-option toggle states (drive the checkmarks). */
+  @Input() showWhitespace = false;
+  @Input() highlightActiveLine = true;
+  @Input() highlightTrailingWhitespace = false;
 
   @Output() openFile = new EventEmitter<void>();
   @Output() newFile = new EventEmitter<void>();
   @Output() save = new EventEmitter<void>();
   @Output() saveAs = new EventEmitter<void>();
   @Output() editAction = new EventEmitter<string>();
+  @Output() viewAction = new EventEmitter<string>();
   @Output() toggleFollow = new EventEmitter<void>();
   @Output() toggleSearch = new EventEmitter<void>();
   @Output() toggleFilter = new EventEmitter<void>();
@@ -200,6 +210,30 @@ export class ToolbarComponent {
     { action: 'eolCrlf', label: 'EOL → Windows (CRLF)' },
     { action: 'eolCr', label: 'EOL → Mac (CR)' },
   ];
+
+  /** Notepad++-style View menu with checkable render options. */
+  get viewMenuItems(): MenuItem[] {
+    return [
+      { action: 'toggleWrap', label: 'Word Wrap', checked: this.wordWrap },
+      { action: 'toggleWhitespace', label: 'Show Whitespace', checked: this.showWhitespace },
+      {
+        action: 'toggleTrailingWhitespace',
+        label: 'Highlight Trailing Whitespace',
+        checked: this.highlightTrailingWhitespace,
+      },
+      {
+        action: 'toggleActiveLine',
+        label: 'Highlight Active Line',
+        checked: this.highlightActiveLine,
+      },
+      { separator: true },
+      { action: 'zoomIn', label: 'Zoom In', shortcut: 'Ctrl++' },
+      { action: 'zoomOut', label: 'Zoom Out', shortcut: 'Ctrl+−' },
+      { action: 'zoomReset', label: 'Restore Default Zoom' },
+      { separator: true },
+      { action: 'toggleTheme', label: 'Dark Theme', checked: this.theme === 'dark' },
+    ];
+  }
 
   onGoto(event: Event): void {
     event.preventDefault();

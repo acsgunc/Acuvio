@@ -7,10 +7,20 @@ export interface AcuvioSettings {
   theme: ThemeName;
   wordWrap: boolean;
   fontSize: number;
+  showWhitespace: boolean;
+  highlightActiveLine: boolean;
+  highlightTrailingWhitespace: boolean;
 }
 
 const STORAGE_KEY = 'acuvio.settings.v1';
-const DEFAULTS: AcuvioSettings = { theme: 'dark', wordWrap: false, fontSize: 13 };
+const DEFAULTS: AcuvioSettings = {
+  theme: 'dark',
+  wordWrap: false,
+  fontSize: 13,
+  showWhitespace: false,
+  highlightActiveLine: true,
+  highlightTrailingWhitespace: false,
+};
 const MIN_FONT = 8;
 const MAX_FONT = 32;
 
@@ -27,6 +37,9 @@ export class SettingsService {
   readonly theme = signal<ThemeName>(DEFAULTS.theme);
   readonly wordWrap = signal<boolean>(DEFAULTS.wordWrap);
   readonly fontSize = signal<number>(DEFAULTS.fontSize);
+  readonly showWhitespace = signal<boolean>(DEFAULTS.showWhitespace);
+  readonly highlightActiveLine = signal<boolean>(DEFAULTS.highlightActiveLine);
+  readonly highlightTrailingWhitespace = signal<boolean>(DEFAULTS.highlightTrailingWhitespace);
 
   constructor() {
     this.load();
@@ -42,6 +55,21 @@ export class SettingsService {
 
   toggleWordWrap(): void {
     this.wordWrap.update((v) => !v);
+    this.save();
+  }
+
+  toggleShowWhitespace(): void {
+    this.showWhitespace.update((v) => !v);
+    this.save();
+  }
+
+  toggleHighlightActiveLine(): void {
+    this.highlightActiveLine.update((v) => !v);
+    this.save();
+  }
+
+  toggleHighlightTrailingWhitespace(): void {
+    this.highlightTrailingWhitespace.update((v) => !v);
     this.save();
   }
 
@@ -78,6 +106,13 @@ export class SettingsService {
       if (typeof parsed.fontSize === 'number') {
         this.fontSize.set(Math.max(MIN_FONT, Math.min(MAX_FONT, parsed.fontSize)));
       }
+      if (typeof parsed.showWhitespace === 'boolean') this.showWhitespace.set(parsed.showWhitespace);
+      if (typeof parsed.highlightActiveLine === 'boolean') {
+        this.highlightActiveLine.set(parsed.highlightActiveLine);
+      }
+      if (typeof parsed.highlightTrailingWhitespace === 'boolean') {
+        this.highlightTrailingWhitespace.set(parsed.highlightTrailingWhitespace);
+      }
     } catch {
       /* corrupt or unavailable storage — fall back to defaults */
     }
@@ -89,6 +124,9 @@ export class SettingsService {
         theme: this.theme(),
         wordWrap: this.wordWrap(),
         fontSize: this.fontSize(),
+        showWhitespace: this.showWhitespace(),
+        highlightActiveLine: this.highlightActiveLine(),
+        highlightTrailingWhitespace: this.highlightTrailingWhitespace(),
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(value));
     } catch {

@@ -185,6 +185,21 @@ Open `test-fixtures/numbers.txt` for the sorting rows and
 After any buffer-changing op the tab becomes **dirty** and a single Ctrl+Z
 undoes it. The three "Copy …" items don't modify the document.
 
+### 2.11 View rendering options (Increment 7)
+
+Open any editable file (e.g. `sample.ts` or `edit-ops.txt`) and use the **View**
+dropdown menu. Each toggle shows a ✓ when active.
+
+| Step | Expected |
+| --- | --- |
+| View → Word Wrap | Long lines wrap/unwrap; checkmark reflects state |
+| View → Show Whitespace | Spaces and tabs render as visible glyphs |
+| View → Highlight Trailing Whitespace | Trailing spaces/tabs at line ends get a tint (try `edit-ops.txt`'s `Date  ` line) |
+| View → Highlight Active Line | The caret's line background turns on/off live |
+| View → Zoom In / Zoom Out / Restore Default Zoom | Font size changes; status bar updates |
+| View → Dark Theme | Whole UI + syntax colors switch; checkmark reflects dark/light |
+| Close & reopen the app | **All** View toggles persist (stored in `localStorage`) |
+
 ---
 
 ## 3. Regression sweep (run before every release)
