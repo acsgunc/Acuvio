@@ -1,4 +1,10 @@
-import { ChangeDetectionStrategy, Component, Input, computed, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, computed, signal } from '@angular/core';
+
+/** Minimal shape the status bar needs to render the language picker. */
+export interface LanguageOption {
+  id: string;
+  label: string;
+}
 
 @Component({
   selector: 'app-status-bar',
@@ -8,10 +14,23 @@ import { ChangeDetectionStrategy, Component, Input, computed, signal } from '@an
     <div class="status-bar">
       <span class="item" title="File path">{{ path() || 'No file open' }}</span>
       <span class="grow"></span>
-      @if (path()) {
+      @if (path() || isEdit) {
         <span class="item">{{ humanSize() }}</span>
         <span class="item">{{ lineCount().toLocaleString() }} lines</span>
         <span class="item">Ln {{ currentLine().toLocaleString() }}</span>
+        @if (isEdit) {
+          <select
+            class="lang-picker item"
+            title="Select language for syntax highlighting"
+            [value]="languageId"
+            (change)="onLanguagePick($event)"
+          >
+            <option value="">Plain Text</option>
+            @for (lang of languages; track lang.id) {
+              <option [value]="lang.id">{{ lang.label }}</option>
+            }
+          </select>
+        }
         <span class="item">{{ encoding() }}</span>
         @if (indexing()) {
           <span class="item indexing">indexing… {{ indexedLines().toLocaleString() }}</span>
@@ -40,6 +59,19 @@ import { ChangeDetectionStrategy, Component, Input, computed, signal } from '@an
       .item {
         white-space: nowrap;
         font-variant-numeric: tabular-nums;
+      }
+      .lang-picker {
+        background: transparent;
+        color: #fff;
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        border-radius: 3px;
+        font-size: 11.5px;
+        padding: 0 4px;
+        cursor: pointer;
+      }
+      .lang-picker option {
+        color: var(--fg);
+        background: var(--bg-panel);
       }
       .indexing {
         opacity: 0.9;
@@ -77,6 +109,15 @@ export class StatusBarComponent {
     this.tailing.set(v);
   }
 
+  /** When true, render the language picker (editable documents only). */
+  @Input() isEdit = false;
+  /** Currently selected language id ('' = plain text). */
+  @Input() languageId = '';
+  /** Available languages for the picker. */
+  @Input() languages: readonly LanguageOption[] = [];
+
+  @Output() languageChange = new EventEmitter<string>();
+
   readonly path = signal<string | null>(null);
   readonly bytes = signal(0);
   readonly lineCount = signal(0);
@@ -85,6 +126,10 @@ export class StatusBarComponent {
   readonly indexing = signal(false);
   readonly indexedLines = signal(0);
   readonly tailing = signal(false);
+
+  onLanguagePick(event: Event): void {
+    this.languageChange.emit((event.target as HTMLSelectElement).value);
+  }
 
   readonly humanSize = computed(() => {
     let n = this.bytes();

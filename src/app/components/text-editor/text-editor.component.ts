@@ -12,9 +12,10 @@ import {
   inject,
 } from '@angular/core';
 import { basicSetup } from 'codemirror';
-import { Compartment, EditorState } from '@codemirror/state';
+import { Compartment, EditorState, type Extension } from '@codemirror/state';
 import { EditorView, keymap } from '@codemirror/view';
 import { indentWithTab } from '@codemirror/commands';
+import { LanguageRegistry } from '../../services/language-registry.service';
 
 /**
  * Editable document view for normal-sized files.
@@ -72,19 +73,37 @@ export class TextEditorComponent implements AfterViewInit, OnDestroy {
     return this._fontSize;
   }
 
+  /**
+   * Language id (from {@link LanguageRegistry}) for syntax highlighting.
+   * `null`/`''` means plain text. Resolved lazily; the grammar is downloaded on
+   * first use only.
+   */
+  @Input() set languageId(value: string | null) {
+    this._languageId = value ?? '';
+    void this.applyLanguage(this._languageId);
+  }
+  get languageId(): string {
+    return this._languageId;
+  }
+
   /** Emits the document's dirty state whenever it changes. */
   @Output() dirtyChange = new EventEmitter<boolean>();
   /** Emits the 1-based cursor line as the selection moves. */
   @Output() cursorLineChange = new EventEmitter<number>();
 
   private readonly zone = inject(NgZone);
+  private readonly languages = inject(LanguageRegistry);
 
   private view!: EditorView;
   private readonly wrapCompartment = new Compartment();
   private readonly fontCompartment = new Compartment();
+  private readonly languageCompartment = new Compartment();
   private _wordWrap = false;
   private _fontSize = 13;
+  private _languageId = '';
   private _dirty = false;
+  /** Pending language extension applied once the view is created. */
+  private pendingLanguage: Extension = [];
   /** Document length corresponding to the last saved state. */
   private savedDocLength = 0;
   private savedDoc = '';
@@ -101,6 +120,7 @@ export class TextEditorComponent implements AfterViewInit, OnDestroy {
           extensions: [
             basicSetup,
             keymap.of([indentWithTab]),
+            this.languageCompartment.of(this.pendingLanguage),
             this.wrapCompartment.of(this._wordWrap ? EditorView.lineWrapping : []),
             this.fontCompartment.of(this.makeFontTheme(this._fontSize)),
             EditorView.theme({
@@ -129,6 +149,33 @@ export class TextEditorComponent implements AfterViewInit, OnDestroy {
   /** Number of lines currently in the document. */
   getLineCount(): number {
     return this.view ? this.view.state.doc.lines : 1;
+  }
+
+  /**
+   * Resolve a language id through the registry and apply its grammar. An empty
+   * id clears highlighting (plain text). Concurrency-safe: if the active id
+   * changes while a grammar is loading, the stale result is discarded.
+   */
+  private async applyLanguage(id: string): Promise<void> {
+    if (!id) {
+      this.pendingLanguage = [];
+      this.reconfigureLanguage([]);
+      return;
+    }
+    const resolved = await this.languages.resolve(id);
+    // Guard against races: only apply if this id is still the active one.
+    if (this._languageId !== id) return;
+    const extension = resolved?.extension ?? [];
+    this.pendingLanguage = extension;
+    this.reconfigureLanguage(extension);
+  }
+
+  private reconfigureLanguage(extension: Extension): void {
+    if (this.view) {
+      this.view.dispatch({
+        effects: this.languageCompartment.reconfigure(extension),
+      });
+    }
   }
 
   /** Mark the current content as the saved baseline (clears the dirty flag). */

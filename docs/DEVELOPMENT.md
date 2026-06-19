@@ -8,6 +8,9 @@ This document is the single source of truth for the feature roadmap. It captures
 **every feature** requested in [`Prompt.md`](../Prompt.md), maps each one to the
 **current state** of the Acuvio codebase, and tracks progress.
 
+> Per-feature deep-dive documentation lives in
+> [`docs/features/`](features/README.md).
+
 - Status legend: ✅ Done · 🟡 Partial · ⬜ Not started
 
 ---
@@ -111,12 +114,12 @@ This document is the single source of truth for the feature roadmap. It captures
 
 | Languages | Status | Notes |
 | --- | --- | --- |
-| C / C++ / C# / Java | ⬜ | Lezer/legacy modes per language. |
-| JS / TS | ⬜ | `@codemirror/lang-javascript`. |
-| Python / Go / Rust | ⬜ | Respective CM6 lang packages. |
-| HTML / XML / JSON / YAML / SQL / CSS | ⬜ | CM6 lang packages. |
-| Markdown / PowerShell / Bash | ⬜ | CM6 lang / legacy modes. |
-| Pluggable language registry | ⬜ | Design a `LanguageRegistry` service so new langs register without core edits. |
+| C / C++ / C# / Java | ✅ | `lang-cpp`, `lang-java`; C# via legacy `clike` stream parser. |
+| JS / TS | ✅ | `@codemirror/lang-javascript` (jsx + typescript). |
+| Python / Go / Rust | ✅ | `lang-python`, `lang-go`, `lang-rust`. |
+| HTML / XML / JSON / YAML / SQL / CSS | ✅ | Respective CM6 lang packages. |
+| Markdown / PowerShell / Bash | ✅ | `lang-markdown`; PowerShell + Shell via legacy modes. |
+| Pluggable language registry | ✅ | `LanguageRegistry` with lazy-loaded definitions; `register()` extensibility seam. |
 | Log severity highlighting | ✅ | `log-highlight.ts` (ERROR/WARN/INFO/DEBUG/TRACE, timestamps, IPs, numbers). |
 
 ### Phase 6 — Code Editing Features
@@ -125,11 +128,11 @@ This document is the single source of truth for the feature roadmap. It captures
 | --- | --- | --- |
 | Bracket matching / brace highlight | ✅ | `basicSetup` bracketMatching (editable mode). |
 | Auto completion | 🟡 | `basicSetup` autocomplete scaffold present; needs language sources. |
-| IntelliSense-ready architecture | ⬜ | Define a `CompletionProvider` interface. |
+| IntelliSense-ready architecture | 🟡 | `LanguageRegistry` provides the per-language seam to attach completion sources. |
 | Snippets | ⬜ | CM6 snippet support. |
 | Parameter hints | ⬜ | Tooltip provider. |
 | Code / symbol navigation | ⬜ | Symbol provider + goto. |
-| Folding by syntax | ⬜ | Language fold service. |
+| Folding by syntax | 🟡 | Editable mode folds via grammar; viewer pending. |
 | Outline view | ⬜ | Sidebar panel from symbol provider. |
 
 ### Phase 7 — File Explorer
@@ -335,4 +338,25 @@ index) and are disabled for editable tabs. The GB-log fast path is untouched.
 **Trade-off:** editing keeps the whole file in the renderer, so it is capped at
 50 MiB; huge files stay in the windowed read-only viewer. This preserves
 Acuvio's core performance guarantee while adding full editing for normal files.
+
+### Increment 3 — Syntax highlighting & language registry (Phase 5)
+
+Adds per-language syntax highlighting for editable documents via a pluggable,
+lazily-loaded registry. Full details:
+[`features/03-syntax-highlighting.md`](features/03-syntax-highlighting.md).
+
+- **`LanguageRegistry`** service — table of `LanguageDefinition`s, each with a
+  dynamic-`import()` loader; detection by exact filename then extension; resolved
+  grammars cached by id. New languages register without editor changes.
+- **18 built-in languages** — JS, TS, Python, Rust, HTML, XML, JSON, YAML, SQL,
+  CSS, Markdown, C/C++, Java, Go, PHP (dedicated packages) + C#, PowerShell,
+  Shell (legacy stream modes). All code-split into lazy chunks.
+- **Editor integration** — `TextEditorComponent` gains a `languageId` input
+  applied through a dedicated CodeMirror compartment, with race-safe async
+  resolution.
+- **UI** — status-bar language picker (edit mode) with auto-detection on open
+  and Save As.
+
+The GB-log viewer keeps its bespoke severity highlighter; source-grammar
+highlighting is editable-mode only.
 

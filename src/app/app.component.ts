@@ -16,6 +16,7 @@ import { TailService } from './services/tail.service';
 import { SearchService } from './services/search.service';
 import { SettingsService } from './services/settings.service';
 import { EditorService } from './services/editor.service';
+import { LanguageRegistry, type LanguageDefinition } from './services/language-registry.service';
 import type { Eol, LogMeta, SearchMatch } from './models';
 
 import { ToolbarComponent } from './components/toolbar/toolbar.component';
@@ -48,6 +49,8 @@ interface Tab {
   content: string;
   eol: Eol;
   dirty: boolean;
+  /** Language id for syntax highlighting (edit mode); '' = plain text. */
+  languageId: string;
   // subscriptions to tear down on close
   subs: Subscription[];
 }
@@ -72,6 +75,7 @@ export class AppComponent implements OnInit {
   private readonly tail = inject(TailService);
   private readonly searchSvc = inject(SearchService);
   private readonly editorSvc = inject(EditorService);
+  private readonly languages = inject(LanguageRegistry);
   readonly settings = inject(SettingsService);
 
   @ViewChild('viewer') viewer?: LogViewerComponent;
@@ -164,6 +168,7 @@ export class AppComponent implements OnInit {
         content: '',
         eol: 'lf',
         dirty: false,
+        languageId: '',
         subs: [],
       };
 
@@ -209,6 +214,7 @@ export class AppComponent implements OnInit {
       content,
       eol,
       dirty: false,
+      languageId: path ? (this.languages.detect(path)?.id ?? '') : '',
       subs: [],
     };
     this.tabs.update((arr) => [...arr, tab]);
@@ -331,6 +337,24 @@ export class AppComponent implements OnInit {
     });
   }
 
+  // ---- language selection ----
+
+  /** All registered languages, for the status-bar picker. */
+  languageList(): LanguageDefinition[] {
+    return this.languages.list();
+  }
+
+  /** Label of the active tab's language (or "Plain Text"). */
+  activeLanguageLabel(): string {
+    const id = this.activeTab()?.languageId ?? '';
+    return id ? (this.languages.getById(id)?.label ?? 'Plain Text') : 'Plain Text';
+  }
+
+  /** Manually set the active editable tab's language. */
+  setLanguage(id: string): void {
+    this.patchActive((t) => (t.languageId = id));
+  }
+
   /** Save the active editable tab (prompts for a path if it is untitled). */
   async save(): Promise<void> {
     const tab = this.activeTab();
@@ -353,7 +377,11 @@ export class AppComponent implements OnInit {
       });
       if (typeof target !== 'string') return;
       await this.writeActive(target);
-      this.patchActive((t) => (t.meta = { ...t.meta, path: target }));
+      this.patchActive((t) => {
+        t.meta = { ...t.meta, path: target };
+        // Re-detect language only if the user hadn't set one explicitly.
+        if (!t.languageId) t.languageId = this.languages.detect(target)?.id ?? '';
+      });
     } catch (err) {
       this.fail('Save As failed', err);
     }

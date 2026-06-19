@@ -73,6 +73,7 @@
         <app-text-editor
           #editor
           [content]="tab.content"
+          [languageId]="tab.languageId"
           [wordWrap]="settings.wordWrap()"
           [fontSize]="settings.fontSize()"
           (dirtyChange)="onDirtyChange($event)"
@@ -108,6 +109,10 @@
     [isIndexing]="activeTab()?.indexing ?? false"
     [indexed]="activeTab()?.indexedLines ?? 0"
     [isTailing]="activeTab()?.tailing ?? false"
+    [isEdit]="activeTab()?.mode === 'edit'"
+    [languageId]="activeTab()?.languageId ?? ''"
+    [languages]="languageList()"
+    (languageChange)="setLanguage($event)"
   ></app-status-bar>
 
   @if (errorMsg(); as msg) {
