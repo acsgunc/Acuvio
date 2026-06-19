@@ -21,7 +21,7 @@
     (toggleFollow)="toggleFollow()"
     (toggleSearch)="toggleSearch()"
     (toggleFilter)="toggleFilter()"
-    (toggleReplace)="toggleReplace()"
+    (toggleReplace)="openFind('replace')"
     (goToTop)="goToTop()"
     (goToEnd)="goToEnd()"
     (gotoLine)="onGotoLine($event)"
@@ -74,17 +74,16 @@
   }
 
   @if (replaceOpen() && activeTab()?.mode === 'edit') {
-    <app-replace-panel
-      #replacePanel
-      (query)="onReplaceQuery($event)"
-      (findNext)="onReplaceFindNext()"
-      (findPrevious)="onReplaceFindPrev()"
-      (replaceNext)="onReplaceNext()"
-      (replaceAll)="onReplaceAll()"
-      (mark)="onMark()"
-      (clearMark)="onClearMark()"
+    <app-find-dialog
+      #findDialog
+      [requestedTab]="findTab()"
+      [seed]="findSeed()"
+      [openNonce]="findNonce()"
+      (request)="onFindRequest($event)"
+      (jumpTo)="onFindJump($event)"
+      (inSelectionChange)="onFindInSelection($event)"
       (close)="closeReplace()"
-    ></app-replace-panel>
+    ></app-find-dialog>
   }
 
   <div class="viewer-area">

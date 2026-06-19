@@ -82,6 +82,10 @@ For the per-increment delivery record and the rolled-up parity matrix, see
 | --- | --- |
 | Find / Replace (edit buffer) | ✅ Done (Increment 5) |
 | Find in Files | ⛔ Not yet |
+| Find (Ctrl+F) dialog: Normal / Extended / Regex modes | ✅ Done |
+| Find: Match case / whole word / wrap / backward / in selection | ✅ Done |
+| Find: Count / Find All in Current Document (results list) | ✅ Done |
+| Replace (Ctrl+H): Replace / Replace All (regex group refs) | ✅ Done |
 | Find Next / Previous | ✅ Done |
 | Select and Find Next / Previous | ⛔ Not yet |
 | Incremental Search | 🟡 Partial (viewer search bar) |

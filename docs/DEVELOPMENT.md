@@ -493,6 +493,22 @@ Five independent mark highlight colors + clear-all. Full details:
   `styleIndex`; new `clearAllMarks`. Search dropdown exposes Style 1–5.
 - **Tests:** +6 Jasmine cases (**54 total**).
 
+### Increment 13 — Find / Replace / Mark dialog (Phase 4, Notepad++ Ctrl+F)
+
+Full Notepad++ Find dialog for editable documents. Full details:
+[`features/13-find-dialog.md`](features/13-find-dialog.md).
+
+- **`editor/find-engine.ts`** — pure engine: `compileQuery`, `findAllMatches`,
+  `nextMatchIndex`, `buildReplacement`, `unescapeExtended/Replacement`. Modes
+  Normal / Extended / Regex (+ dotAll), case/word/wrap/backward/in-selection.
+- **`find-dialog.component.ts`** — tabbed Find / Replace / Mark dialog with
+  Count, Find All results list, history, and a status line.
+- **`TextEditorComponent`** — `findStep`/`countWith`/`findAllWith`/
+  `replaceCurrent`/`replaceAllWith`/`bookmarkMatchingLines` + scope helpers.
+- **Keys:** Ctrl+F (Find), Ctrl+H (Replace), F3 / Shift+F3, Enter / Shift+Enter,
+  Esc. Removed the obsolete `ReplacePanelComponent`.
+- **Tests:** +27 engine cases (**79 total**). Verified in-browser end to end.
+
 ---
 
 ## 7. Notepad++ Parity Matrix

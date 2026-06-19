@@ -277,6 +277,35 @@ Open any text file with repeated words.
 
 ---
 
+### 2.17 Find / Replace / Mark dialog (Increment 13)
+
+Open an editable file with repeated words (e.g. several `foo`/`FOO`). Press
+**Ctrl+F** (Find tab) or **Ctrl+H** (Replace tab), or the 🔁 Replace button.
+
+| Step | Expected |
+| --- | --- |
+| Select a word, press Ctrl+F | Dialog opens on Find tab with the word seeded and selected |
+| Type a term | Status shows the live match count |
+| Find Next / Find Previous (or Enter / Shift+Enter) | Caret moves to the next/previous match; status "Match X of Y"; wraps with "(wrapped)" when Wrap around is on |
+| Turn off Wrap around, navigate past the last match | "Can't find …" (no wrap) |
+| Count | Status shows total matches |
+| Find All in Current Document | Results list appears with Ln/Col rows; clicking a row jumps to it |
+| Match case on | Only exact-case matches counted |
+| Match whole word only | Substrings excluded; option disabled when Regular expression is selected |
+| Extended mode, search `\t` or `\n` | Tabs / newlines are matched |
+| Regular expression mode | Pattern matches; ". matches newline" enables dotAll |
+| In selection (with a multi-line selection) | Find/Count/Replace restricted to the selection |
+| Ctrl+H → Replace, set Replace with, click Replace | Current match replaced, caret advances; status "Replaced; Match X of Y" |
+| Replace All | All matches replaced in one undo step; status "Replaced N occurrences" |
+| Regex replace with `$1` group refs | Group references expand in the replacement |
+| Mark tab → choose Style, Mark All | All occurrences highlight in that color; status "Marked N" |
+| Mark tab → Bookmark line + Mark All | Matching lines also get bookmarks |
+| Mark tab → Clear All Marks | All mark colors cleared |
+| F3 / Shift+F3 (dialog open) | Repeats find next / previous |
+| Esc | Dialog closes; "In selection" scope cleared |
+
+---
+
 ## 3. Regression sweep (run before every release)
 
 1. `npm run build` — production bundle succeeds.

@@ -26,7 +26,12 @@ import { FilterPanelComponent, type FilterRequest } from './components/filter-pa
 import { StatusBarComponent } from './components/status-bar/status-bar.component';
 import { LogViewerComponent } from './components/log-viewer/log-viewer.component';
 import { TextEditorComponent, type ViewRenderOptions } from './components/text-editor/text-editor.component';
-import { ReplacePanelComponent, type ReplaceQuery } from './components/replace-panel/replace-panel.component';
+import {
+  FindDialogComponent,
+  type FindRequest,
+  type FindResultRow,
+  type FindTab,
+} from './components/find-dialog/find-dialog.component';
 
 /** Per-tab UI + backend state. */
 interface Tab {
@@ -68,7 +73,7 @@ interface Tab {
     StatusBarComponent,
     LogViewerComponent,
     TextEditorComponent,
-    ReplacePanelComponent,
+    FindDialogComponent,
   ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
@@ -83,10 +88,7 @@ export class AppComponent implements OnInit {
 
   @ViewChild('viewer') viewer?: LogViewerComponent;
   @ViewChild('editor') editor?: TextEditorComponent;
-  @ViewChild('replacePanel') replacePanel?: ReplacePanelComponent;
-
-  /** The most recent find/replace query (used by the Mark action). */
-  private lastReplaceQuery: ReplaceQuery | null = null;
+  @ViewChild('findDialog') findDialog?: FindDialogComponent;
 
   readonly tabs = signal<Tab[]>([]);
   readonly activeIndex = signal(0);
@@ -94,6 +96,11 @@ export class AppComponent implements OnInit {
   readonly replaceOpen = signal(false);
   readonly filterOpen = signal(false);
   readonly errorMsg = signal<string | null>(null);
+
+  /** Find dialog open parameters (driven into the dialog via inputs). */
+  readonly findTab = signal<FindTab>('find');
+  readonly findSeed = signal('');
+  readonly findNonce = signal(0);
 
   /** Monotonic id source for in-memory (unsaved) editable tabs. */
   private nextEditId = 1;
@@ -498,57 +505,117 @@ export class AppComponent implements OnInit {
 
   // ---- Find & Replace (edit mode) ----
 
-  toggleReplace(): void {
-    const open = !this.replaceOpen();
-    this.replaceOpen.set(open);
+  // ---- Find / Replace / Mark dialog (edit mode) ----
+
+  /** Open the Find dialog on a given tab, seeding the editor's selected word. */
+  openFind(tab: FindTab): void {
+    if (this.activeTab()?.mode !== 'edit') return;
+    this.findTab.set(tab);
+    this.findSeed.set(this.editor?.selectedText() ?? '');
+    this.replaceOpen.set(true);
+    // Bump the nonce so the dialog (re)applies tab + seed and refocuses,
+    // whether it was already open or is being created by the @if block.
+    this.findNonce.update((n) => n + 1);
   }
 
   closeReplace(): void {
     this.replaceOpen.set(false);
+    this.editor?.clearFindScope();
     this.editor?.focus();
   }
 
-  onReplaceQuery(q: ReplaceQuery): void {
-    this.lastReplaceQuery = q;
-    this.editor?.setSearch(q);
-    if (this.replacePanel) {
-      this.replacePanel.matchCount = this.editor?.countMatches() ?? 0;
+  /** Toggle "In selection" scope capture on the editor. */
+  onFindInSelection(enabled: boolean): void {
+    if (enabled) this.editor?.captureFindScope();
+    else this.editor?.clearFindScope();
+  }
+
+  /** Jump to a Find-All result row. */
+  onFindJump(row: FindResultRow): void {
+    this.editor?.revealRange(row.from, row.to);
+  }
+
+  /** Execute a request from the Find dialog and feed back status/results. */
+  onFindRequest(req: FindRequest): void {
+    const ed = this.editor;
+    const dlg = this.findDialog;
+    if (!ed || !dlg) return;
+    const opts = { backward: req.backward, wrapAround: req.wrapAround };
+
+    switch (req.type) {
+      case 'count': {
+        if (!req.query.term) {
+          this.setFindStatus('', false);
+          break;
+        }
+        const n = ed.countWith(req.query);
+        this.setFindStatus(`${n} ${n === 1 ? 'match' : 'matches'}`, false);
+        break;
+      }
+      case 'findNext':
+      case 'findPrev': {
+        const r = ed.findStep(req.query, opts);
+        if (!r.found) this.setFindStatus(`Can't find "${req.query.term}"`, true);
+        else this.setFindStatus(this.matchStatus(r.current, r.total, r.wrapped), false);
+        break;
+      }
+      case 'findAll': {
+        const hits = ed.findAllWith(req.query);
+        dlg.showResults(hits);
+        this.setFindStatus(`${hits.length} ${hits.length === 1 ? 'hit' : 'hits'} in current document`, false);
+        break;
+      }
+      case 'replace': {
+        const r = ed.replaceCurrent(req.query, req.replacement, req.wrapAround);
+        this.refreshActiveDirty();
+        if (r.replaced && r.found) this.setFindStatus(`Replaced; ${this.matchStatus(r.current, r.total, r.wrapped)}`, false);
+        else if (r.replaced) this.setFindStatus('Replaced', false);
+        else if (!r.found) this.setFindStatus(`Can't find "${req.query.term}"`, true);
+        else this.setFindStatus(this.matchStatus(r.current, r.total, r.wrapped), false);
+        break;
+      }
+      case 'replaceAll': {
+        const n = ed.replaceAllWith(req.query, req.replacement);
+        this.refreshActiveDirty();
+        dlg.clearResults();
+        this.setFindStatus(`Replaced ${n} ${n === 1 ? 'occurrence' : 'occurrences'}`, false);
+        break;
+      }
+      case 'markAll': {
+        if (req.purge) ed.clearAllMarks();
+        const n = ed.setMark(
+          req.query.term,
+          { caseSensitive: req.query.caseSensitive, wholeWord: req.query.wholeWord, regexp: req.query.mode === 'regex' },
+          req.markStyle,
+        );
+        if (req.bookmarkLine) ed.bookmarkMatchingLines(req.query);
+        this.setFindStatus(`Marked ${n} ${n === 1 ? 'occurrence' : 'occurrences'}`, false);
+        break;
+      }
+      case 'clearMarks': {
+        ed.clearAllMarks();
+        this.setFindStatus('Marks cleared', false);
+        break;
+      }
     }
   }
 
-  onReplaceFindNext(): void {
-    this.editor?.findNext();
-  }
-  onReplaceFindPrev(): void {
-    this.editor?.findPrevious();
-  }
-  onReplaceNext(): void {
-    this.editor?.replaceNext();
-    if (this.replacePanel) {
-      this.replacePanel.matchCount = this.editor?.countMatches() ?? 0;
-    }
-  }
-  onReplaceAll(): void {
-    this.editor?.replaceAll();
-    if (this.replacePanel) {
-      this.replacePanel.matchCount = this.editor?.countMatches() ?? 0;
-    }
+  /** Format a "match X of Y" status, noting a wrap-around when it happened. */
+  private matchStatus(current: number, total: number, wrapped: boolean): string {
+    const base = `Match ${current} of ${total}`;
+    return wrapped ? `${base} (wrapped)` : base;
   }
 
-  /** Persistently highlight all occurrences of the current find term. */
-  onMark(): void {
-    const q = this.lastReplaceQuery;
-    if (!q?.search) return;
-    this.editor?.setMark(q.search, {
-      caseSensitive: q.caseSensitive,
-      wholeWord: q.wholeWord,
-      regexp: q.regexp,
-    });
+  private setFindStatus(text: string, error: boolean): void {
+    if (!this.findDialog) return;
+    this.findDialog.status = text;
+    this.findDialog.statusError = error;
   }
 
-  /** Clear all mark highlighting. */
-  onClearMark(): void {
-    this.editor?.clearAllMarks();
+  /** Recompute the active tab's dirty flag after a programmatic edit. */
+  private refreshActiveDirty(): void {
+    const dirty = this.editor?.isDirty() ?? false;
+    this.patchActive((t) => (t.dirty = dirty));
   }
 
   /** Save the active editable tab (prompts for a path if it is untitled). */
@@ -603,6 +670,13 @@ export class AppComponent implements OnInit {
 
   @HostListener('window:keydown', ['$event'])
   onKeydown(event: KeyboardEvent): void {
+    // F3 / Shift+F3: repeat the last find without the dialog (edit mode).
+    if (event.key === 'F3' && this.activeTab()?.mode === 'edit') {
+      event.preventDefault();
+      const dlg = this.findDialog;
+      if (dlg) dlg.run(event.shiftKey ? 'findPrev' : 'findNext');
+      return;
+    }
     if (!(event.ctrlKey || event.metaKey)) return;
     const key = event.key.toLowerCase();
     if (key === 's') {
@@ -616,17 +690,17 @@ export class AppComponent implements OnInit {
       event.preventDefault();
       void this.onOpenFile();
     } else if (key === 'h') {
-      // Ctrl+H: Find & Replace (editable documents only).
+      // Ctrl+H: Find & Replace dialog (Replace tab), editable documents only.
       if (this.activeTab()?.mode === 'edit') {
         event.preventDefault();
-        this.replaceOpen.set(true);
+        this.openFind('replace');
       }
     } else if (key === 'f') {
-      // Ctrl+F: editable docs use the in-editor replace bar (find row);
-      // the log viewer uses the backend search panel.
+      // Ctrl+F: editable docs open the Find dialog (Find tab); the log viewer
+      // uses the backend search panel.
       if (this.activeTab()?.mode === 'edit') {
         event.preventDefault();
-        this.replaceOpen.set(true);
+        this.openFind('find');
       }
     }
   }

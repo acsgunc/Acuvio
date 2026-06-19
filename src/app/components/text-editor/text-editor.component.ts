@@ -40,6 +40,13 @@ import {
 import { markHighlighter, setMarkEffect, clearAllMarksEffect, markCount, type MarkOptions } from '../../editor/mark';
 import { findMatchingBracket } from '../../editor/brace-match';
 import {
+  findAllMatches,
+  nextMatchIndex,
+  buildReplacement,
+  type FindQuery,
+  type FindMatch,
+} from '../../editor/find-engine';
+import {
   SearchQuery,
   setSearchQuery,
   findNext,
@@ -48,6 +55,24 @@ import {
   replaceAll,
   getSearchQuery,
 } from '@codemirror/search';
+
+/** A single Find-All hit, surfaced to the dialog's results list. */
+export interface FindHit {
+  line: number;
+  column: number;
+  from: number;
+  to: number;
+  lineText: string;
+}
+
+/** Outcome of an interactive find step. */
+export interface FindStepResult {
+  found: boolean;
+  total: number;
+  /** 1-based index of the selected match, or 0 when none. */
+  current: number;
+  wrapped: boolean;
+}
 
 /**
  * Editable document view for normal-sized files.
@@ -372,6 +397,167 @@ export class TextEditorComponent implements AfterViewInit, OnDestroy {
       return 0; // invalid regex
     }
     return count;
+  }
+
+  // ---- Find dialog engine (Notepad++ Search → Find, full option matrix) ----
+
+  /**
+   * Optional "In selection" scope. When set, all dialog-driven finds, counts,
+   * replacements and Find-All results are restricted to this offset range.
+   */
+  private findScope: { from: number; to: number } | null = null;
+
+  /** Capture the current non-empty selection as the "In selection" scope. */
+  captureFindScope(): boolean {
+    if (!this.view) return false;
+    const sel = this.view.state.selection.main;
+    if (sel.empty) {
+      this.findScope = null;
+      return false;
+    }
+    this.findScope = { from: sel.from, to: sel.to };
+    return true;
+  }
+
+  /** Drop the "In selection" scope. */
+  clearFindScope(): void {
+    this.findScope = null;
+  }
+
+  /** All matches of `query`, restricted to the active scope when present. */
+  private scopedMatches(query: FindQuery): FindMatch[] {
+    if (!this.view) return [];
+    const matches = findAllMatches(this.view.state.doc.toString(), query);
+    if (!this.findScope) return matches;
+    const { from, to } = this.findScope;
+    return matches.filter((m) => m.from >= from && m.to <= to);
+  }
+
+  /**
+   * Push a best-effort CodeMirror search query so the built-in match highlight
+   * tracks the dialog. CM cannot express extended/dotAll/scope exactly, so the
+   * authoritative navigation is done by {@link findStep}.
+   */
+  private pushHighlight(query: FindQuery): void {
+    if (!this.view) return;
+    const cm = new SearchQuery({
+      search: query.term,
+      caseSensitive: query.caseSensitive,
+      regexp: query.mode === 'regex',
+      literal: query.mode === 'normal',
+      wholeWord: query.wholeWord && query.mode !== 'regex',
+    });
+    this.view.dispatch({ effects: setSearchQuery.of(cm) });
+  }
+
+  /** Move to and select the next/previous match relative to the caret. */
+  findStep(query: FindQuery, opts: { backward: boolean; wrapAround: boolean }): FindStepResult {
+    if (!this.view) return { found: false, total: 0, current: 0, wrapped: false };
+    this.pushHighlight(query);
+    const matches = this.scopedMatches(query);
+    if (matches.length === 0) return { found: false, total: 0, current: 0, wrapped: false };
+    const sel = this.view.state.selection.main;
+    const { index, wrapped } = nextMatchIndex(matches, sel.from, sel.to, opts);
+    if (index === null) return { found: false, total: matches.length, current: 0, wrapped: false };
+    const m = matches[index];
+    this.view.dispatch({
+      selection: { anchor: m.from, head: m.to },
+      effects: EditorView.scrollIntoView(m.from, { y: 'center' }),
+      scrollIntoView: true,
+    });
+    this.view.focus();
+    return { found: true, total: matches.length, current: index + 1, wrapped };
+  }
+
+  /** Count occurrences of `query` (honoring the active scope). */
+  countWith(query: FindQuery): number {
+    return this.scopedMatches(query).length;
+  }
+
+  /** Every match of `query` as a navigable hit list for the results panel. */
+  findAllWith(query: FindQuery): FindHit[] {
+    if (!this.view) return [];
+    const doc = this.view.state.doc;
+    return this.scopedMatches(query).map((m) => {
+      const line = doc.lineAt(m.from);
+      return { line: line.number, column: m.from - line.from + 1, from: m.from, to: m.to, lineText: line.text };
+    });
+  }
+
+  /** Select the match covering a document offset and scroll it into view. */
+  revealRange(from: number, to: number): void {
+    if (!this.view) return;
+    this.view.dispatch({
+      selection: { anchor: from, head: to },
+      effects: EditorView.scrollIntoView(from, { y: 'center' }),
+      scrollIntoView: true,
+    });
+    this.view.focus();
+  }
+
+  /**
+   * Replace the current selection when it is a match, then advance to the next
+   * one. Returns whether a replacement happened plus the post-step state.
+   */
+  replaceCurrent(query: FindQuery, replacement: string, wrapAround: boolean): FindStepResult & { replaced: boolean } {
+    if (!this.view) return { found: false, total: 0, current: 0, wrapped: false, replaced: false };
+    const sel = this.view.state.selection.main;
+    const matches = this.scopedMatches(query);
+    const onMatch = matches.find((m) => m.from === sel.from && m.to === sel.to);
+    let replaced = false;
+    if (onMatch) {
+      const matched = this.view.state.sliceDoc(onMatch.from, onMatch.to);
+      const text = buildReplacement(query, replacement, matched);
+      const delta = text.length - (onMatch.to - onMatch.from);
+      if (this.findScope) this.findScope = { from: this.findScope.from, to: this.findScope.to + delta };
+      this.view.dispatch({
+        changes: { from: onMatch.from, to: onMatch.to, insert: text },
+        selection: { anchor: onMatch.from + text.length },
+      });
+      replaced = true;
+    }
+    const step = this.findStep(query, { backward: false, wrapAround });
+    return { ...step, replaced };
+  }
+
+  /** Replace every match of `query` in one undoable step. Returns the count. */
+  replaceAllWith(query: FindQuery, replacement: string): number {
+    if (!this.view) return 0;
+    const matches = this.scopedMatches(query);
+    if (matches.length === 0) return 0;
+    const changes = matches.map((m) => {
+      const matched = this.view!.state.sliceDoc(m.from, m.to);
+      return { from: m.from, to: m.to, insert: buildReplacement(query, replacement, matched) };
+    });
+    this.view.dispatch({ changes, userEvent: 'input.replace.all' });
+    this.clearFindScope();
+    this.view.focus();
+    return matches.length;
+  }
+
+  /** The currently selected text (empty string when the selection is empty). */
+  selectedText(): string {
+    if (!this.view) return '';
+    const sel = this.view.state.selection.main;
+    return sel.empty ? '' : this.view.state.sliceDoc(sel.from, sel.to);
+  }
+
+  /** Whether the document differs from its saved baseline. */
+  isDirty(): boolean {
+    return this._dirty;
+  }
+
+  /** Bookmark every line that contains a match of `query` (Mark tab option). */
+  bookmarkMatchingLines(query: FindQuery): void {
+    if (!this.view) return;
+    const doc = this.view.state.doc;
+    const matches = this.scopedMatches(query);
+    const positions = new Set<number>();
+    for (const m of matches) positions.add(doc.lineAt(m.from).from);
+    if (positions.size === 0) return;
+    const existing = bookmarkedLines(this.view.state).map((n) => doc.line(n).from);
+    const merged = [...new Set([...existing, ...positions])];
+    this.view.dispatch({ effects: setBookmarksEffect.of(merged) });
   }
 
   // ---- Bookmarks (Notepad++ Search → Bookmark) ----
