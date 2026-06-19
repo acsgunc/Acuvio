@@ -88,6 +88,13 @@ write(
   ].join('\n') + '\n',
 );
 
+// ---- 3b. Numeric / length sorting playground ----------------------------
+write(
+  'numbers.txt',
+  ['item 10', 'item 2', 'item 1', 'item 100', 'item 21', 'no-number-here', 'item 3'].join('\n') +
+    '\n',
+);
+
 // ---- 4. Encoding: UTF-8 with BOM ----------------------------------------
 write('utf8-bom.txt', '\uFEFF' + 'This file starts with a UTF-8 BOM.\nSecond line.\n');
 

@@ -29,6 +29,7 @@ the GB-scale viewer fast path.
    | `sample.ts` `sample.py` `sample.rs` `sample.json` `sample.sql` `sample.md` | Syntax highlighting per language |
    | `eol-lf.txt` `eol-crlf.txt` `eol-cr.txt` | EOL detection & conversion |
    | `edit-ops.txt` | Sort / dedupe / trim / case / blank-line ops |
+   | `numbers.txt` | Numeric & length sorting, non-numeric ordering |
    | `utf8-bom.txt` | Encoding/BOM detection |
    | `app.log` (5000 lines) | Search / filter / severity highlighting |
    | `large-over-50mb.log` (with `--large`) | Read-only viewer fallback |
@@ -157,6 +158,32 @@ Open `test-fixtures/app.log` (or `huge.log`) — these use the **viewer**:
 | Open several files | Each gets its own tab; click to switch |
 | Edit one tab | Only that tab shows the dirty indicator |
 | Close a tab | Remaining tabs unaffected |
+
+### 2.10 Advanced line operations & insertions (Increment 6)
+
+Open `test-fixtures/numbers.txt` for the sorting rows and
+`test-fixtures/edit-ops.txt` for the rest. Use the **Edit** dropdown menu.
+
+| Operation | Expected |
+| --- | --- |
+| Sort Lines (Ignore Case) on `edit-ops.txt` | `Apple`/`apple` group together regardless of case |
+| Sort Lines as Integers ↑ on `numbers.txt` | Order becomes `item 1, item 2, item 3, item 10, item 21, item 100`, then `no-number-here` last |
+| Sort Lines as Integers ↓ | Reverse numeric order; `no-number-here` still last |
+| Sort Lines by Length ↑ / ↓ | Lines reorder shortest→longest / longest→shortest |
+| Reverse Line Order | Lines reverse |
+| Randomize Line Order | Lines shuffle; running it again reshuffles; no line is lost |
+| Remove Duplicate Lines | All duplicates removed (keeps first) |
+| Remove Consecutive Duplicates | Only *adjacent* duplicate lines collapse |
+| Remove Empty Lines | Blank / whitespace-only lines removed |
+| Insert Blank Line Above / Below | An empty line appears above / below the caret line |
+| Insert Date/Time (Short) | Locale short date+time string inserted at caret |
+| Insert Date/Time (Long) | Locale full date + time string inserted at caret |
+| Copy Full File Path | Clipboard holds the file's absolute path (paste to verify) |
+| Copy File Name | Clipboard holds just the file name |
+| Copy Directory Path | Clipboard holds the containing folder path |
+
+After any buffer-changing op the tab becomes **dirty** and a single Ctrl+Z
+undoes it. The three "Copy …" items don't modify the document.
 
 ---
 

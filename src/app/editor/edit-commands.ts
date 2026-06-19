@@ -74,6 +74,70 @@ export const sortLinesDescending: StateCommand = (view) => {
   return replaceLines(view, range, sorted);
 };
 
+/** Sort the selected lines (or whole doc) ignoring case. */
+export const sortLinesCaseInsensitiveAscending: StateCommand = (view) => {
+  const range = selectedLineRange(view.state);
+  const sorted = getLines(view.state, range).sort((a, b) =>
+    a.localeCompare(b, undefined, { sensitivity: 'accent' }),
+  );
+  return replaceLines(view, range, sorted);
+};
+
+/** Sort the selected lines (or whole doc) ignoring case, descending. */
+export const sortLinesCaseInsensitiveDescending: StateCommand = (view) => {
+  const range = selectedLineRange(view.state);
+  const sorted = getLines(view.state, range).sort((a, b) =>
+    b.localeCompare(a, undefined, { sensitivity: 'accent' }),
+  );
+  return replaceLines(view, range, sorted);
+};
+
+/** Parse the leading numeric value of a line; non-numeric lines sort last. */
+function leadingNumber(line: string): number {
+  const m = line.match(/-?\d+(?:\.\d+)?/);
+  return m ? Number(m[0]) : Number.NaN;
+}
+
+/** Stable numeric comparator; `NaN` (non-numeric) lines are pushed to the end. */
+function compareNumeric(a: string, b: string, descending = false): number {
+  const na = leadingNumber(a);
+  const nb = leadingNumber(b);
+  const aNan = Number.isNaN(na);
+  const bNan = Number.isNaN(nb);
+  if (aNan && bNan) return 0;
+  if (aNan) return 1;
+  if (bNan) return -1;
+  return descending ? nb - na : na - nb;
+}
+
+/** Sort the selected lines (or whole doc) by their leading numeric value. */
+export const sortLinesNumericAscending: StateCommand = (view) => {
+  const range = selectedLineRange(view.state);
+  const sorted = getLines(view.state, range).sort((a, b) => compareNumeric(a, b));
+  return replaceLines(view, range, sorted);
+};
+
+/** Sort the selected lines (or whole doc) by leading numeric value, descending. */
+export const sortLinesNumericDescending: StateCommand = (view) => {
+  const range = selectedLineRange(view.state);
+  const sorted = getLines(view.state, range).sort((a, b) => compareNumeric(a, b, true));
+  return replaceLines(view, range, sorted);
+};
+
+/** Sort the selected lines (or whole doc) by line length (shortest first). */
+export const sortLinesByLengthAscending: StateCommand = (view) => {
+  const range = selectedLineRange(view.state);
+  const sorted = getLines(view.state, range).sort((a, b) => a.length - b.length);
+  return replaceLines(view, range, sorted);
+};
+
+/** Sort the selected lines (or whole doc) by line length (longest first). */
+export const sortLinesByLengthDescending: StateCommand = (view) => {
+  const range = selectedLineRange(view.state);
+  const sorted = getLines(view.state, range).sort((a, b) => b.length - a.length);
+  return replaceLines(view, range, sorted);
+};
+
 /** Remove duplicate lines, keeping the first occurrence (order preserved). */
 export const removeDuplicateLines: StateCommand = (view) => {
   const range = selectedLineRange(view.state);
@@ -84,6 +148,18 @@ export const removeDuplicateLines: StateCommand = (view) => {
       seen.add(line);
       result.push(line);
     }
+  }
+  return replaceLines(view, range, result);
+};
+
+/** Remove only consecutive duplicate lines (like the Unix `uniq` command). */
+export const removeConsecutiveDuplicateLines: StateCommand = (view) => {
+  const range = selectedLineRange(view.state);
+  const result: string[] = [];
+  let prev: string | null = null;
+  for (const line of getLines(view.state, range)) {
+    if (line !== prev) result.push(line);
+    prev = line;
   }
   return replaceLines(view, range, result);
 };
@@ -108,6 +184,69 @@ export const joinLines: StateCommand = (view) => {
   const joined = getLines(view.state, range).join('');
   return replaceLines(view, range, [joined]);
 };
+
+/**
+ * Randomly shuffle the selected lines (or whole doc) using a Fisher–Yates
+ * shuffle. `rng` is injectable so the shuffle is deterministic in tests.
+ */
+export function randomizeLines(rng: () => number = Math.random): StateCommand {
+  return (view) => {
+    const range = selectedLineRange(view.state);
+    const lines = getLines(view.state, range);
+    for (let i = lines.length - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1));
+      [lines[i], lines[j]] = [lines[j], lines[i]];
+    }
+    return replaceLines(view, range, lines);
+  };
+}
+
+/** Insert a blank line above the line containing the primary caret. */
+export const insertBlankLineAbove: StateCommand = (view) => {
+  const { state, dispatch } = view;
+  const line = state.doc.lineAt(state.selection.main.head);
+  dispatch(
+    state.update({
+      changes: { from: line.from, insert: '\n' },
+      selection: EditorSelection.cursor(line.from),
+      scrollIntoView: true,
+      userEvent: 'input.edit',
+    }),
+  );
+  return true;
+};
+
+/** Insert a blank line below the line containing the primary caret. */
+export const insertBlankLineBelow: StateCommand = (view) => {
+  const { state, dispatch } = view;
+  const line = state.doc.lineAt(state.selection.main.head);
+  dispatch(
+    state.update({
+      changes: { from: line.to, insert: '\n' },
+      selection: EditorSelection.cursor(line.to + 1),
+      scrollIntoView: true,
+      userEvent: 'input.edit',
+    }),
+  );
+  return true;
+};
+
+/**
+ * Insert `text` at every caret, replacing any non-empty selection ranges.
+ * Used for "Insert Date/Time" and similar text-insertion menu commands.
+ */
+export function insertText(text: string): StateCommand {
+  return (view) => {
+    const { state, dispatch } = view;
+    dispatch(
+      state.update(
+        state.replaceSelection(text),
+        { scrollIntoView: true, userEvent: 'input.edit' },
+      ),
+    );
+    return true;
+  };
+}
 
 // ---- Case conversion ------------------------------------------------------
 

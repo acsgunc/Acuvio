@@ -53,17 +53,17 @@ For the per-increment delivery record and the rolled-up parity matrix, see
 | Cut / Copy / Paste / Delete | ✅ Done |
 | Select All | ✅ Done |
 | Begin/End Select (+ column variants) | ⛔ Not yet |
-| Insert → Date/Time (short/long/custom) | ⛔ Not yet |
-| Copy to Clipboard → full path / filename / dir / all paths | ⛔ Not yet |
+| Insert → Date/Time (short/long/custom) | 🟡 Partial (short/long done; custom format TBD) |
+| Copy to Clipboard → full path / filename / dir / all paths | 🟡 Partial (path/name/dir done; all-paths TBD) |
 | Indent → increase / decrease | ✅ Done |
 | Convert Case → UPPER / lower / Proper / Sentence / iNVERT / raNDom | 🟡 Partial (UPPER/lower/Proper/Sentence/Invert done; Random TBD) |
 | Line Ops → Duplicate / Move Up / Move Down | ✅ Done |
-| Line Ops → Remove Duplicate Lines (global / consecutive) | 🟡 Partial (global done; consecutive-only TBD) |
+| Line Ops → Remove Duplicate Lines (global / consecutive) | ✅ Done |
 | Line Ops → Split / Join | 🟡 Partial (Join done; Split TBD) |
 | Line Ops → Remove Empty Lines (+ blank-char variant) | ✅ Done |
-| Line Ops → Insert Blank Line Above / Below | ⛔ Not yet |
-| Line Ops → Sort (lexicographic asc/desc, integer, decimal, length) | 🟡 Partial (lexicographic asc/desc done; numeric/length TBD) |
-| Line Ops → Randomize / Reverse | 🟡 Partial (Reverse done; Randomize TBD) |
+| Line Ops → Insert Blank Line Above / Below | ✅ Done |
+| Line Ops → Sort (lexicographic asc/desc, integer, decimal, length) | 🟡 Partial (lexicographic, ignore-case, integer, length done; decimal comma/dot TBD) |
+| Line Ops → Randomize / Reverse | ✅ Done |
 | Comment / Uncomment (line toggle + block) | 🟡 Partial (line toggle done; block TBD) |
 | Auto-Completion (function / word / path / param hint) | ⛔ Not yet |
 | EOL Conversion → Windows (CRLF) / Unix (LF) / Mac (CR) | ✅ Done |

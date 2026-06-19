@@ -395,6 +395,21 @@ Adds client-side Find & Replace for editable documents. Full details:
 - **Manual coverage:** [`MANUAL_TESTING.md`](MANUAL_TESTING.md) §2.6; fixtures via
   `npm run fixtures`.
 
+### Increment 6 — Advanced line operations & insertions (Phase 3, Notepad++ Edit menu)
+
+Completes the Notepad++ **Edit** menu's Sort / Line / Insert submenus. Full
+details: [`features/06-advanced-line-operations.md`](features/06-advanced-line-operations.md).
+
+- **`edit-commands.ts`** gains numeric / length / case-insensitive sorts,
+  `removeConsecutiveDuplicateLines`, `randomizeLines(rng)` (deterministic in
+  tests), `insertBlankLineAbove/Below`, and an `insertText(text)` factory.
+- **App-level insertions:** Insert Date/Time (short/long) and Copy file
+  path / name / directory to clipboard.
+- **Tests:** +11 Jasmine cases (**25 total**); numeric sort pushes non-numeric
+  lines last, matching Notepad++.
+- **Manual coverage:** [`MANUAL_TESTING.md`](MANUAL_TESTING.md) §2.10; new
+  `numbers.txt` fixture.
+
 ---
 
 ## 7. Notepad++ Parity Matrix
@@ -407,7 +422,7 @@ aren't missed. The **full per-feature catalog** (every menu, with status) lives 
 | Notepad++ Menu | Representative commands | Status | Notes |
 | --- | --- | --- | --- |
 | **File** | New, Open, Save, Save As, Close, Recent, Session, Print | 🟡 | New/Open/Save/Save As/Close done; recent/session/print/rename pending. |
-| **Edit** | Undo/redo, line ops, case, blank ops, comment, EOL, column mode, clipboard history | 🟡 | Line/case/blank/comment/indent/EOL done; column editor, insert date, copy-path pending. |
+| **Edit** | Undo/redo, line ops, case, blank ops, comment, EOL, column mode, clipboard history | 🟡 | Line/case/blank/comment/indent/EOL + numeric/length/case sort, randomize, blank-line insert, insert date/time, copy-path done; column editor, clipboard history pending. |
 | **Search** | Find, Replace, Find in Files, Mark, Incremental, Go to line, Bookmarks, Brace match | 🟡 | Find/Replace (edit, +case/word/regex), filter/regex/go-to-line done; Find-in-Files, Mark, bookmarks, brace-match pending. |
 | **View** | Word wrap, zoom, folding, document map, function list, full screen, split, show symbols | 🟡 | Wrap/zoom/folding (edit) done; minimap, outline, split, full-screen, whitespace symbols pending. |
 | **Encoding** | UTF-8/16, ANSI, convert-to, BOM | 🟡 | Detection + status display done; interactive convert/reload-as pending. |

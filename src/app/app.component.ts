@@ -379,9 +379,23 @@ export class AppComponent implements OnInit {
       case 'joinLines': ed.runCommand(editCommands.joinLines); break;
       case 'sortAscending': ed.runCommand(editCommands.sortLinesAscending); break;
       case 'sortDescending': ed.runCommand(editCommands.sortLinesDescending); break;
+      case 'sortCaseInsensitive': ed.runCommand(editCommands.sortLinesCaseInsensitiveAscending); break;
+      case 'sortNumericAscending': ed.runCommand(editCommands.sortLinesNumericAscending); break;
+      case 'sortNumericDescending': ed.runCommand(editCommands.sortLinesNumericDescending); break;
+      case 'sortLengthAscending': ed.runCommand(editCommands.sortLinesByLengthAscending); break;
+      case 'sortLengthDescending': ed.runCommand(editCommands.sortLinesByLengthDescending); break;
       case 'reverseLines': ed.runCommand(editCommands.reverseLines); break;
+      case 'randomizeLines': ed.runCommand(editCommands.randomizeLines()); break;
       case 'removeDuplicateLines': ed.runCommand(editCommands.removeDuplicateLines); break;
+      case 'removeConsecutiveDuplicateLines': ed.runCommand(editCommands.removeConsecutiveDuplicateLines); break;
       case 'removeEmptyLines': ed.runCommand(editCommands.removeEmptyLines); break;
+      case 'insertBlankLineAbove': ed.runCommand(editCommands.insertBlankLineAbove); break;
+      case 'insertBlankLineBelow': ed.runCommand(editCommands.insertBlankLineBelow); break;
+      case 'insertDateTimeShort': ed.runCommand(editCommands.insertText(this.formatDateTime('short'))); break;
+      case 'insertDateTimeLong': ed.runCommand(editCommands.insertText(this.formatDateTime('long'))); break;
+      case 'copyFilePath': void this.copyToClipboard(this.activeTab()?.meta.path ?? ''); break;
+      case 'copyFileName': void this.copyToClipboard(this.fileName(this.activeTab()?.meta.path ?? '')); break;
+      case 'copyFileDir': void this.copyToClipboard(this.dirName(this.activeTab()?.meta.path ?? '')); break;
       case 'upperCase': ed.runCommand(editCommands.toUpperCase); break;
       case 'lowerCase': ed.runCommand(editCommands.toLowerCase); break;
       case 'properCase': ed.runCommand(editCommands.toProperCase); break;
@@ -395,6 +409,36 @@ export class AppComponent implements OnInit {
       case 'eolLf': this.setEol('lf'); break;
       case 'eolCrlf': this.setEol('crlf'); break;
       case 'eolCr': this.setEol('cr'); break;
+    }
+  }
+
+  /** Format the current date/time for the "Insert Date Time" commands. */
+  private formatDateTime(style: 'short' | 'long'): string {
+    const now = new Date();
+    if (style === 'short') {
+      return now.toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
+    }
+    return now.toLocaleString(undefined, { dateStyle: 'full', timeStyle: 'medium' });
+  }
+
+  /** The file name (last path segment) of a full path. */
+  private fileName(path: string): string {
+    return path.split(/[\\/]/).pop() ?? path;
+  }
+
+  /** The directory portion of a full path. */
+  private dirName(path: string): string {
+    const i = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'));
+    return i >= 0 ? path.slice(0, i) : '';
+  }
+
+  /** Copy text to the system clipboard (no-op for empty strings). */
+  private async copyToClipboard(text: string): Promise<void> {
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      /* clipboard unavailable (e.g. no focus) — silently ignore */
     }
   }
 
