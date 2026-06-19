@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  HostListener,
   OnInit,
   ViewChild,
   inject,
@@ -8,23 +9,27 @@ import {
   computed,
 } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { open as openDialog } from '@tauri-apps/plugin-dialog';
+import { open as openDialog, save as saveDialog } from '@tauri-apps/plugin-dialog';
 
 import { LogService } from './services/log.service';
 import { TailService } from './services/tail.service';
 import { SearchService } from './services/search.service';
 import { SettingsService } from './services/settings.service';
-import type { LogMeta, SearchMatch } from './models';
+import { EditorService } from './services/editor.service';
+import type { Eol, LogMeta, SearchMatch } from './models';
 
 import { ToolbarComponent } from './components/toolbar/toolbar.component';
 import { SearchPanelComponent, type SearchRequest } from './components/search-panel/search-panel.component';
 import { FilterPanelComponent, type FilterRequest } from './components/filter-panel/filter-panel.component';
 import { StatusBarComponent } from './components/status-bar/status-bar.component';
 import { LogViewerComponent } from './components/log-viewer/log-viewer.component';
+import { TextEditorComponent } from './components/text-editor/text-editor.component';
 
 /** Per-tab UI + backend state. */
 interface Tab {
   meta: LogMeta;
+  /** `view` = read-only mmap log viewer; `edit` = in-memory editable buffer. */
+  mode: 'view' | 'edit';
   lineCount: number;
   currentLine: number;
   follow: boolean;
@@ -39,6 +44,10 @@ interface Tab {
   filterActive: boolean;
   filterBusy: boolean;
   filterMatched: number;
+  // edit mode
+  content: string;
+  eol: Eol;
+  dirty: boolean;
   // subscriptions to tear down on close
   subs: Subscription[];
 }
@@ -53,6 +62,7 @@ interface Tab {
     FilterPanelComponent,
     StatusBarComponent,
     LogViewerComponent,
+    TextEditorComponent,
   ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
@@ -61,15 +71,20 @@ export class AppComponent implements OnInit {
   private readonly log = inject(LogService);
   private readonly tail = inject(TailService);
   private readonly searchSvc = inject(SearchService);
+  private readonly editorSvc = inject(EditorService);
   readonly settings = inject(SettingsService);
 
   @ViewChild('viewer') viewer?: LogViewerComponent;
+  @ViewChild('editor') editor?: TextEditorComponent;
 
   readonly tabs = signal<Tab[]>([]);
   readonly activeIndex = signal(0);
   readonly searchOpen = signal(false);
   readonly filterOpen = signal(false);
   readonly errorMsg = signal<string | null>(null);
+
+  /** Monotonic id source for in-memory (unsaved) editable tabs. */
+  private nextEditId = 1;
 
   readonly activeTab = computed<Tab | null>(() => this.tabs()[this.activeIndex()] ?? null);
 
@@ -107,10 +122,33 @@ export class AppComponent implements OnInit {
   }
 
   private async openPath(path: string): Promise<void> {
+    // Prefer editable mode for normal-sized files; fall back to the read-only
+    // memory-mapped viewer when the file is too large to load into memory.
+    try {
+      const tf = await this.editorSvc.openText(path);
+      this.addEditTab(path, tf.content, tf.eol, tf.encoding, tf.size);
+      return;
+    } catch (err) {
+      if (!this.isTooLargeError(err)) {
+        this.fail('Failed to open file', err);
+        return;
+      }
+      // Too large to edit — open it in the viewer instead.
+    }
+    await this.openAsViewer(path);
+  }
+
+  private isTooLargeError(err: unknown): boolean {
+    const msg = typeof err === 'string' ? err : err instanceof Error ? err.message : '';
+    return msg.includes('too large');
+  }
+
+  private async openAsViewer(path: string): Promise<void> {
     try {
       const meta = await this.log.openLog(path);
       const tab: Tab = {
         meta,
+        mode: 'view',
         lineCount: meta.lineCount,
         currentLine: 1,
         follow: false,
@@ -123,6 +161,9 @@ export class AppComponent implements OnInit {
         filterActive: false,
         filterBusy: false,
         filterMatched: 0,
+        content: '',
+        eol: 'lf',
+        dirty: false,
         subs: [],
       };
 
@@ -146,18 +187,64 @@ export class AppComponent implements OnInit {
     }
   }
 
+  /** Create an editable tab from already-loaded text. */
+  private addEditTab(path: string, content: string, eol: Eol, encoding: string, size: number): void {
+    const fileId = `edit-${this.nextEditId++}`;
+    const lineCount = content.length === 0 ? 1 : content.split('\n').length;
+    const tab: Tab = {
+      meta: { fileId, path, size, lineCount, encoding },
+      mode: 'edit',
+      lineCount,
+      currentLine: 1,
+      follow: false,
+      tailing: false,
+      indexing: false,
+      indexedLines: lineCount,
+      matches: [],
+      matchIndex: -1,
+      searchBusy: false,
+      filterActive: false,
+      filterBusy: false,
+      filterMatched: 0,
+      content,
+      eol,
+      dirty: false,
+      subs: [],
+    };
+    this.tabs.update((arr) => [...arr, tab]);
+    this.activeIndex.set(this.tabs().length - 1);
+  }
+
+  /** Open a fresh, empty, unsaved editable document. */
+  newFile(): void {
+    this.addEditTab('', '', 'lf', 'UTF-8', 0);
+  }
+
   async closeTab(index: number, event?: Event): Promise<void> {
     event?.stopPropagation();
     const tab = this.tabs()[index];
     if (!tab) return;
+    if (tab.mode === 'edit' && tab.dirty) {
+      const name = this.tabName(tab);
+      const ok = confirm(`"${name}" has unsaved changes. Close without saving?`);
+      if (!ok) return;
+    }
     tab.subs.forEach((s) => s.unsubscribe());
-    try {
-      await this.log.closeLog(tab.meta.fileId);
-    } catch {
-      /* ignore */
+    if (tab.mode === 'view') {
+      try {
+        await this.log.closeLog(tab.meta.fileId);
+      } catch {
+        /* ignore */
+      }
     }
     this.tabs.update((arr) => arr.filter((_, i) => i !== index));
     this.activeIndex.set(Math.max(0, Math.min(this.activeIndex(), this.tabs().length - 1)));
+  }
+
+  /** Display name for a tab (file name, or "Untitled" for new buffers). */
+  tabName(tab: Tab): string {
+    if (!tab.meta.path) return 'Untitled';
+    return tab.meta.path.split('/').pop()?.split('\\').pop() ?? tab.meta.path;
   }
 
   selectTab(index: number): void {
@@ -198,22 +285,113 @@ export class AppComponent implements OnInit {
   }
 
   goToTop(): void {
+    const tab = this.activeTab();
+    if (tab?.mode === 'edit') {
+      this.editor?.goToLine(1);
+      return;
+    }
     void this.viewer?.goToLine(1);
   }
 
   goToEnd(): void {
     const tab = this.activeTab();
-    if (tab) void this.viewer?.goToLine(tab.lineCount);
+    if (!tab) return;
+    if (tab.mode === 'edit') {
+      this.editor?.goToLine(tab.lineCount);
+      return;
+    }
+    void this.viewer?.goToLine(tab.lineCount);
   }
 
   onGotoLine(line: number): void {
     const tab = this.activeTab();
     if (!tab) return;
-    void this.viewer?.goToLine(Math.max(1, Math.min(line, tab.lineCount)));
+    const clamped = Math.max(1, Math.min(line, tab.lineCount));
+    if (tab.mode === 'edit') {
+      this.editor?.goToLine(clamped);
+      return;
+    }
+    void this.viewer?.goToLine(clamped);
   }
 
   onTopLineChange(line: number): void {
     this.patchActive((t) => (t.currentLine = line));
+  }
+
+  // ---- edit mode: save / dirty tracking ----
+
+  onDirtyChange(dirty: boolean): void {
+    this.patchActive((t) => (t.dirty = dirty));
+  }
+
+  onEditorCursor(line: number): void {
+    this.patchActive((t) => {
+      t.currentLine = line;
+      t.lineCount = this.editor?.getLineCount() ?? t.lineCount;
+    });
+  }
+
+  /** Save the active editable tab (prompts for a path if it is untitled). */
+  async save(): Promise<void> {
+    const tab = this.activeTab();
+    if (!tab || tab.mode !== 'edit' || !this.editor) return;
+    if (!tab.meta.path) {
+      await this.saveAs();
+      return;
+    }
+    await this.writeActive(tab.meta.path);
+  }
+
+  /** Save the active editable tab to a newly chosen path. */
+  async saveAs(): Promise<void> {
+    const tab = this.activeTab();
+    if (!tab || tab.mode !== 'edit') return;
+    try {
+      const target = await saveDialog({
+        title: 'Save As',
+        defaultPath: tab.meta.path || 'untitled.txt',
+      });
+      if (typeof target !== 'string') return;
+      await this.writeActive(target);
+      this.patchActive((t) => (t.meta = { ...t.meta, path: target }));
+    } catch (err) {
+      this.fail('Save As failed', err);
+    }
+  }
+
+  private async writeActive(path: string): Promise<void> {
+    const tab = this.activeTab();
+    if (!tab || !this.editor) return;
+    try {
+      const content = this.editor.getContent();
+      const size = await this.editorSvc.saveText(path, content, tab.eol);
+      this.editor.markSaved();
+      this.patchActive((t) => {
+        t.dirty = false;
+        t.meta = { ...t.meta, size };
+      });
+    } catch (err) {
+      this.fail('Save failed', err);
+    }
+  }
+
+  // ---- keyboard shortcuts ----
+
+  @HostListener('window:keydown', ['$event'])
+  onKeydown(event: KeyboardEvent): void {
+    if (!(event.ctrlKey || event.metaKey)) return;
+    const key = event.key.toLowerCase();
+    if (key === 's') {
+      event.preventDefault();
+      if (event.shiftKey) void this.saveAs();
+      else void this.save();
+    } else if (key === 'n') {
+      event.preventDefault();
+      this.newFile();
+    } else if (key === 'o') {
+      event.preventDefault();
+      void this.onOpenFile();
+    }
   }
 
   // ---- search ----

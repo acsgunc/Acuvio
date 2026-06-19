@@ -8,6 +8,7 @@ use crate::log_file::LogFile;
 use crate::search::{self, SearchMatch};
 use crate::state::AppState;
 use crate::tailer;
+use crate::text_file::{self, TextFile, MAX_EDIT_BYTES};
 
 /// Metadata returned when a file is opened.
 #[derive(Serialize)]
@@ -123,6 +124,27 @@ pub fn start_tailing(app: AppHandle, state: State<AppState>, file_id: String) ->
 #[tauri::command]
 pub fn stop_tailing(state: State<AppState>, file_id: String) {
     state.remove_tailer(&file_id);
+}
+
+/// The maximum byte size Acuvio will open in editable mode (frontend uses this
+/// to decide between the editor and the read-only viewer before opening).
+#[tauri::command]
+pub fn max_edit_bytes() -> u64 {
+    MAX_EDIT_BYTES
+}
+
+/// Read a normal-sized file into memory for editing. Errors (e.g. too large)
+/// let the caller fall back to `open_log` and the read-only viewer.
+#[tauri::command]
+pub fn open_text(path: String) -> Result<TextFile, String> {
+    text_file::open_text(&path)
+}
+
+/// Persist edited text back to disk, applying the given line ending
+/// (`"lf"`, `"crlf"`, or `"cr"`). Returns the number of bytes written.
+#[tauri::command]
+pub fn save_text(path: String, content: String, eol: String) -> Result<u64, String> {
+    text_file::save_text(&path, &content, &eol)
 }
 
 fn friendly_io_error(path: &str, e: &std::io::Error) -> String {

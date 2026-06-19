@@ -34,3 +34,14 @@ export interface LogAppended {
   newLines: string[];
   totalLines: number;
 }
+
+/** Line-ending style for an editable document. */
+export type Eol = 'lf' | 'crlf' | 'cr';
+
+/** A file loaded into editable mode. `content` uses `\n` separators. */
+export interface TextFile {
+  content: string;
+  encoding: string;
+  eol: Eol;
+  size: number;
+}

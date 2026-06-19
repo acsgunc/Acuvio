@@ -6,6 +6,7 @@ mod log_file;
 mod search;
 mod state;
 mod tailer;
+mod text_file;
 
 use state::AppState;
 
@@ -55,6 +56,9 @@ pub fn run() {
             commands::filter_lines,
             commands::start_tailing,
             commands::stop_tailing,
+            commands::max_edit_bytes,
+            commands::open_text,
+            commands::save_text,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Acuvio");

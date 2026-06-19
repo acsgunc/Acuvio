@@ -55,23 +55,23 @@ This document is the single source of truth for the feature roadmap. It captures
 
 | Feature | Status | Notes / Where |
 | --- | --- | --- |
-| Multiple document interface (tabs) | 🟡 | Multiple files in tabs exist for read-only log viewing; needs full editable docs. |
-| Open / Save / Save As | 🟡 | Open implemented; Save/Save As needed (currently read-only viewer). |
+| Multiple document interface (tabs) | 🟡 | Tabs host both read-only viewers and editable docs; dirty indicator shown. |
+| Open / Save / Save As | ✅ | Editable files load via `open_text`; Save / Save As / Ctrl+S / Ctrl+Shift+S write back (`save_text`). |
 | Auto Save | ⬜ | New setting + debounced writer. |
 | Session restore | 🟡 | Partial state in `state.rs`; persist open tabs + cursor. |
 | Recent files | ⬜ | Store in settings; surface in menu. |
 | Drag & Drop | ⬜ | Tauri file-drop event → open. |
 | File change detection | 🟡 | `tailer.rs` watches via `notify`; extend to external-edit prompts. |
-| Read-only mode | ✅ | Current default viewer behavior. |
+| Read-only mode | ✅ | Default for huge logs (viewer); editable mode for normal files. |
 | Encoding detection (UTF‑8/16, ANSI) | 🟡 | Status bar shows encoding; add detection + conversion. |
-| Line endings (CRLF/LF/CR) | ⬜ | Detect + convert + display. |
+| Line endings (CRLF/LF/CR) | 🟡 | Detected on open and preserved on save (`text_file.rs`); UI display/convert pending. |
 | Zoom | ✅ | Toolbar A−/A+/reset → CodeMirror font-size compartment; persisted. |
 | Word Wrap | ✅ | Toolbar toggle → `EditorView.lineWrapping` compartment; persisted. |
 | Minimap | ⬜ | Optional CM6 minimap extension. |
 | Line numbers | ✅ | CodeMirror gutter. |
-| Code folding | ⬜ | `@codemirror/language` fold service. |
+| Code folding | 🟡 | Available in editable mode via CodeMirror `basicSetup`; add to viewer. |
 | Bookmark lines | ⬜ | Gutter marker + nav. |
-| Goto line | ✅ | Toolbar line input → O(1) `goToLine` seek. |
+| Goto line | ✅ | Toolbar line input → viewer O(1) seek or editor caret move. |
 | Goto symbol | ⬜ | Requires outline/symbol provider. |
 | Split editor (H/V) | ⬜ | Multi-pane layout. |
 
@@ -79,20 +79,20 @@ This document is the single source of truth for the feature roadmap. It captures
 
 | Feature | Status | Notes |
 | --- | --- | --- |
-| Undo / Redo (multi-level) | ⬜ | CM6 history (needs editable mode). |
-| Multi-cursor editing | ⬜ | CM6 supports natively once editable. |
-| Column / rectangular selection | ⬜ | CM6 `rectangularSelection`. |
-| Multiple selections | ⬜ | CM6 native. |
-| Duplicate line | ⬜ | CM6 command. |
-| Move line up/down | ⬜ | CM6 `moveLineUp/Down`. |
+| Undo / Redo (multi-level) | ✅ | CodeMirror history in editable mode. |
+| Multi-cursor editing | ✅ | CodeMirror native (editable mode). |
+| Column / rectangular selection | ✅ | `basicSetup` rectangular selection (Alt+drag). |
+| Multiple selections | ✅ | CodeMirror native. |
+| Duplicate line | 🟡 | CodeMirror command; add keybinding. |
+| Move line up/down | 🟡 | CodeMirror `moveLineUp/Down`; add keybinding. |
 | Join / split lines | ⬜ | Custom commands. |
-| Delete line | ⬜ | CM6 `deleteLine`. |
+| Delete line | 🟡 | CodeMirror `deleteLine`; add keybinding. |
 | Trim whitespace | ⬜ | Custom transaction. |
 | Convert tabs/spaces | ⬜ | Custom command. |
-| Auto / smart indentation | ⬜ | `indentOnInput` + language indent. |
-| Auto-closing brackets/quotes | ⬜ | `@codemirror/autocomplete` closeBrackets. |
-| Smart Home/End, Smart Backspace | ⬜ | CM6 keymap. |
-| Incremental search | 🟡 | Search exists; add incremental-as-you-type. |
+| Auto / smart indentation | ✅ | `indentOnInput` + `indentWithTab` (editable mode). |
+| Auto-closing brackets/quotes | ✅ | `basicSetup` closeBrackets (editable mode). |
+| Smart Home/End, Smart Backspace | 🟡 | CodeMirror default keymap; verify bindings. |
+| Incremental search | 🟡 | Backend search exists; editable mode has CM search. |
 
 ### Phase 4 — Search
 
@@ -123,8 +123,8 @@ This document is the single source of truth for the feature roadmap. It captures
 
 | Feature | Status | Notes |
 | --- | --- | --- |
-| Bracket matching / brace highlight | ⬜ | `bracketMatching()`. |
-| Auto completion | ⬜ | `@codemirror/autocomplete`. |
+| Bracket matching / brace highlight | ✅ | `basicSetup` bracketMatching (editable mode). |
+| Auto completion | 🟡 | `basicSetup` autocomplete scaffold present; needs language sources. |
 | IntelliSense-ready architecture | ⬜ | Define a `CompletionProvider` interface. |
 | Snippets | ⬜ | CM6 snippet support. |
 | Parameter hints | ⬜ | Tooltip provider. |
@@ -305,4 +305,34 @@ increments, and always preserve existing read-only GB-log performance.
 
 All preferences survive reloads and apply to the active and future tabs.
 No backend changes were required; the read-only mmap fast path is unchanged.
+
+### Increment 2 — Editable document model (Phases 2, 3, 6)
+
+Adds a true editing mode alongside the read-only GB-log viewer, selected
+automatically by file size.
+
+- **Backend** — new [`text_file.rs`](../src-tauri/src/text_file.rs) module +
+  commands `open_text`, `save_text`, `max_edit_bytes`. Files ≤ 50 MiB are read
+  into memory (no mmap, so the file isn't locked); larger files fall back to the
+  viewer. Line endings are detected on open and **preserved on save** (LF/CRLF/CR).
+  Covered by unit tests (`cargo test`, 17 passing).
+- **Editable view** — new
+  [`TextEditorComponent`](../src/app/components/text-editor/text-editor.component.ts)
+  built on CodeMirror `basicSetup`: undo/redo, multi-cursor, rectangular
+  selection, bracket matching, auto-close brackets, code folding, and CM search
+  all work out of the box. Word-wrap and zoom honor the shared settings.
+- **App integration** —
+  [`EditorService`](../src/app/services/editor.service.ts) bridges the new
+  commands; tabs now carry a `mode` (`view` | `edit`), a `dirty` flag (shown as
+  `●` in the tab and `*` on the Save button), and per-tab line ending.
+- **Commands & shortcuts** — toolbar **New / Save / Save As**, plus
+  **Ctrl+N**, **Ctrl+O**, **Ctrl+S**, **Ctrl+Shift+S**. Closing a dirty tab
+  prompts for confirmation; Save As uses the native file dialog.
+
+Search / Filter / Follow remain viewer-only (they rely on the backend file
+index) and are disabled for editable tabs. The GB-log fast path is untouched.
+
+**Trade-off:** editing keeps the whole file in the renderer, so it is capped at
+50 MiB; huge files stay in the windowed read-only viewer. This preserves
+Acuvio's core performance guarantee while adding full editing for normal files.
 

@@ -6,20 +6,36 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from 
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="toolbar">
-      <button (click)="openFile.emit()" title="Open a log file (Ctrl+O)">📂 Open</button>
+      <button (click)="newFile.emit()" title="New file (Ctrl+N)">📄 New</button>
+      <button (click)="openFile.emit()" title="Open a file (Ctrl+O)">📂 Open</button>
+      <button [disabled]="!isEdit" (click)="save.emit()" title="Save (Ctrl+S)">
+        💾 Save{{ isEdit && dirty ? ' *' : '' }}
+      </button>
+      <button [disabled]="!isEdit" (click)="saveAs.emit()" title="Save As (Ctrl+Shift+S)">Save As…</button>
+      <span class="sep"></span>
       <button
         [class.active]="follow"
-        [disabled]="!hasFile"
+        [disabled]="!hasFile || isEdit"
         (click)="toggleFollow.emit()"
         title="Follow / live-tail the file"
       >
         {{ follow ? '⏸ Following' : '▶ Follow' }}
       </button>
       <span class="sep"></span>
-      <button [disabled]="!hasFile" [class.active]="searchOpen" (click)="toggleSearch.emit()" title="Search (Ctrl+F)">
+      <button
+        [disabled]="!hasFile || isEdit"
+        [class.active]="searchOpen"
+        (click)="toggleSearch.emit()"
+        title="Search (Ctrl+F)"
+      >
         🔍 Search
       </button>
-      <button [disabled]="!hasFile" [class.active]="filterOpen" (click)="toggleFilter.emit()" title="Filter lines">
+      <button
+        [disabled]="!hasFile || isEdit"
+        [class.active]="filterOpen"
+        (click)="toggleFilter.emit()"
+        title="Filter lines"
+      >
         ⚗ Filter
       </button>
       <span class="sep"></span>
@@ -101,8 +117,15 @@ export class ToolbarComponent {
   @Input() wordWrap = false;
   @Input() fontSize = 13;
   @Input() theme: 'dark' | 'light' = 'dark';
+  /** True when the active tab is an editable document. */
+  @Input() isEdit = false;
+  /** True when the active editable document has unsaved changes. */
+  @Input() dirty = false;
 
   @Output() openFile = new EventEmitter<void>();
+  @Output() newFile = new EventEmitter<void>();
+  @Output() save = new EventEmitter<void>();
+  @Output() saveAs = new EventEmitter<void>();
   @Output() toggleFollow = new EventEmitter<void>();
   @Output() toggleSearch = new EventEmitter<void>();
   @Output() toggleFilter = new EventEmitter<void>();

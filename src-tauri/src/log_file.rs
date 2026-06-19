@@ -195,7 +195,7 @@ fn line_of_offset_in(starts: &[u64], offset: u64) -> u64 {
 }
 
 /// Best-effort encoding guess from a BOM; defaults to UTF-8.
-fn detect_encoding(bytes: &[u8]) -> String {
+pub fn detect_encoding(bytes: &[u8]) -> String {
     if bytes.len() >= 3 && bytes[0] == 0xEF && bytes[1] == 0xBB && bytes[2] == 0xBF {
         "UTF-8 (BOM)".into()
     } else if bytes.len() >= 2 && bytes[0] == 0xFF && bytes[1] == 0xFE {

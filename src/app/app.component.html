@@ -7,7 +7,12 @@
     [wordWrap]="settings.wordWrap()"
     [fontSize]="settings.fontSize()"
     [theme]="settings.theme()"
+    [isEdit]="activeTab()?.mode === 'edit'"
+    [dirty]="activeTab()?.dirty ?? false"
     (openFile)="onOpenFile()"
+    (newFile)="newFile()"
+    (save)="save()"
+    (saveAs)="saveAs()"
     (toggleFollow)="toggleFollow()"
     (toggleSearch)="toggleSearch()"
     (toggleFilter)="toggleFilter()"
@@ -28,10 +33,11 @@
           class="tab"
           role="tab"
           [class.active]="i === activeIndex()"
+          [class.dirty]="tab.mode === 'edit' && tab.dirty"
           (click)="selectTab(i)"
-          [title]="tab.meta.path"
+          [title]="tab.meta.path || 'Untitled (unsaved)'"
         >
-          <span class="name">{{ tab.meta.path.split('/').pop()?.split('\\')?.pop() }}</span>
+          <span class="name">{{ tabName(tab) }}{{ tab.mode === 'edit' && tab.dirty ? ' ●' : '' }}</span>
           <button class="close" (click)="closeTab(i, $event)" title="Close tab">✕</button>
         </div>
       }
@@ -63,20 +69,32 @@
 
   <div class="viewer-area">
     @if (activeTab(); as tab) {
-      <app-log-viewer
-        #viewer
-        [fileId]="tab.meta.fileId"
-        [totalLines]="tab.lineCount"
-        [follow]="tab.follow"
-        [wordWrap]="settings.wordWrap()"
-        [fontSize]="settings.fontSize()"
-        (topLineChange)="onTopLineChange($event)"
-      ></app-log-viewer>
+      @if (tab.mode === 'edit') {
+        <app-text-editor
+          #editor
+          [content]="tab.content"
+          [wordWrap]="settings.wordWrap()"
+          [fontSize]="settings.fontSize()"
+          (dirtyChange)="onDirtyChange($event)"
+          (cursorLineChange)="onEditorCursor($event)"
+        ></app-text-editor>
+      } @else {
+        <app-log-viewer
+          #viewer
+          [fileId]="tab.meta.fileId"
+          [totalLines]="tab.lineCount"
+          [follow]="tab.follow"
+          [wordWrap]="settings.wordWrap()"
+          [fontSize]="settings.fontSize()"
+          (topLineChange)="onTopLineChange($event)"
+        ></app-log-viewer>
+      }
     } @else {
       <div class="empty-state">
         <div class="logo">Acuvio</div>
         <p>Sharp clarity for massive logs.</p>
-        <button (click)="onOpenFile()">📂 Open a log file</button>
+        <button (click)="onOpenFile()">📂 Open a file</button>
+        <button (click)="newFile()">📄 New file</button>
       </div>
     }
   </div>
