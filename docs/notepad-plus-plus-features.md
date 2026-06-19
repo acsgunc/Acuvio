@@ -87,6 +87,8 @@ For the per-increment delivery record and the rolled-up parity matrix, see
 | Incremental Search | 🟡 Partial (viewer search bar) |
 | Search Results window | 🟡 Partial (viewer result list) |
 | Go to… (line / offset) | ✅ Done (Go to line) |
+| Bookmark: cut / copy / remove bookmarked lines | ✅ Done |
+| Bookmark: remove unbookmarked lines / inverse | ✅ Done |
 | Brace matching (go to / select between) | ✅ Done |
 | Mark (persistent highlight of matches) | 🟡 Partial (single-style mark all + clear done; 1st–5th multi-color styles & jump pending) |
 | Change History (jump to modified lines) | ⛔ Not yet |

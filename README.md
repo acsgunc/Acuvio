@@ -69,7 +69,8 @@ npx @tauri-apps/cli icon src-tauri/icons/icon.png
 desktop window:
 
 - **Windows:** double-click **`run.cmd`**
-- **macOS / Linux:** **`./run.sh`**
+- **macOS:** double-click **`run.command`** in Finder (first time only: `chmod +x run.command`), or run **`./run.sh`**
+- **Linux:** run **`./run.sh`**, or install a menu entry with **`./scripts/install-linux-launcher.sh`** (then launch *Acuvio* from your app menu)
 - **Any OS:** **`npm run app`**
 
 Optional flags: `--build` (production bundle) or `--web` (UI only).

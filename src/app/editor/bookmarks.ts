@@ -17,6 +17,8 @@ import { EditorView, GutterMarker, gutter, Decoration, type DecorationSet } from
 export const toggleBookmarkEffect = StateEffect.define<number>();
 /** Remove every bookmark. */
 export const clearBookmarksEffect = StateEffect.define<null>();
+/** Replace the whole bookmark set with bookmarks at the given line-start positions. */
+export const setBookmarksEffect = StateEffect.define<number[]>();
 
 class BookmarkMarker extends GutterMarker {
   override toDOM(): Node {
@@ -41,6 +43,11 @@ const bookmarkGutterField = StateField.define<RangeSet<GutterMarker>>({
       if (effect.is(toggleBookmarkEffect)) {
         const line = tr.state.doc.lineAt(effect.value);
         set = toggleAt(set, line.from, () => bookmarkMarker.range(line.from));
+      } else if (effect.is(setBookmarksEffect)) {
+        const ranges = [...new Set(effect.value)]
+          .sort((a, b) => a - b)
+          .map((pos) => bookmarkMarker.range(pos));
+        set = RangeSet.of(ranges, true);
       } else if (effect.is(clearBookmarksEffect)) {
         set = RangeSet.empty;
       }
@@ -60,6 +67,11 @@ const bookmarkLineField = StateField.define<DecorationSet>({
       if (effect.is(toggleBookmarkEffect)) {
         const line = tr.state.doc.lineAt(effect.value);
         set = toggleAt(set, line.from, () => bookmarkLineDeco.range(line.from));
+      } else if (effect.is(setBookmarksEffect)) {
+        const ranges = [...new Set(effect.value)]
+          .sort((a, b) => a - b)
+          .map((pos) => bookmarkLineDeco.range(pos));
+        set = Decoration.set(ranges, true);
       } else if (effect.is(clearBookmarksEffect)) {
         set = Decoration.none;
       }
@@ -140,3 +152,38 @@ export function prevBookmarkLine(lines: number[], current: number): number | nul
   }
   return sorted[sorted.length - 1];
 }
+
+/**
+ * Split a document's lines into those that are bookmarked and those that are not.
+ *
+ * `bookmarked` is a list of 1-based line numbers (any order, duplicates ignored);
+ * out-of-range numbers are ignored. Both result arrays preserve document order.
+ * Pure so it can be unit-tested without an editor.
+ */
+export function partitionByBookmarks(
+  lines: string[],
+  bookmarked: number[],
+): { marked: string[]; unmarked: string[] } {
+  const set = new Set(bookmarked);
+  const marked: string[] = [];
+  const unmarked: string[] = [];
+  for (let i = 0; i < lines.length; i++) {
+    if (set.has(i + 1)) marked.push(lines[i]);
+    else unmarked.push(lines[i]);
+  }
+  return { marked, unmarked };
+}
+
+/**
+ * Invert a bookmark selection: returns the 1-based line numbers in
+ * `[1..totalLines]` that are NOT currently bookmarked, sorted ascending.
+ */
+export function invertBookmarks(totalLines: number, bookmarked: number[]): number[] {
+  const set = new Set(bookmarked);
+  const out: number[] = [];
+  for (let n = 1; n <= totalLines; n++) {
+    if (!set.has(n)) out.push(n);
+  }
+  return out;
+}
+

@@ -245,6 +245,22 @@ Open a code file (e.g. `sample.ts` or `sample.rs`).
 
 ---
 
+### 2.15 Bookmark line operations (Increment 11)
+
+Open `edit-ops.txt` (or any multi-line file) and bookmark a few lines with
+Ctrl+F2 first.
+
+| Step | Expected |
+| --- | --- |
+| Search → Copy Bookmarked Lines, then paste elsewhere (Ctrl+V) | Only the bookmarked lines' text is pasted, in document order |
+| Search → Remove Bookmarked Lines | The bookmarked lines disappear; bookmarks cleared; one undo restores all |
+| Re-bookmark some lines, Search → Cut Bookmarked Lines, paste elsewhere | Those lines are removed from the doc and appear at the paste point |
+| Re-bookmark some lines, Search → Remove Unbookmarked Lines | Only the bookmarked lines remain |
+| Bookmark 2 of 5 lines, Search → Inverse Bookmarks | The other 3 lines become bookmarked; the original 2 are cleared |
+| With no bookmarks set, run any of the above | Nothing happens (no error) |
+
+---
+
 ## 3. Regression sweep (run before every release)
 
 1. `npm run build` — production bundle succeeds.

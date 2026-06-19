@@ -468,6 +468,20 @@ Go-to and select-to matching brace. Full details:
 - **Tests:** +5 Jasmine cases (**44 total**).
 - **One-click run:** `run.cmd` / `run.sh` / `npm run app` (see §4).
 
+### Increment 11 — Bookmark line operations (Phase 4, Notepad++ Search → Bookmark)
+
+Copy / cut / remove bookmarked lines, remove unbookmarked lines, inverse
+bookmarks. Full details:
+[`features/11-bookmark-line-operations.md`](features/11-bookmark-line-operations.md).
+
+- **`editor/bookmarks.ts`** — pure `partitionByBookmarks` / `invertBookmarks` +
+  `setBookmarksEffect`.
+- **`TextEditorComponent`** — `copy/cut/removeBookmarkedLines`,
+  `removeNonBookmarkedLines`, `inverseBookmarks`; Search dropdown items.
+- **Tests:** +4 Jasmine cases (**48 total**).
+- **Cross-platform one-click launchers:** added `run.command` (macOS),
+  `Acuvio.desktop` + `scripts/install-linux-launcher.sh` (Linux).
+
 ---
 
 ## 7. Notepad++ Parity Matrix

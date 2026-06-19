@@ -30,9 +30,12 @@ import {
   bookmarks,
   toggleBookmarkEffect,
   clearBookmarksEffect,
+  setBookmarksEffect,
   bookmarkedLines,
   nextBookmarkLine,
   prevBookmarkLine,
+  partitionByBookmarks,
+  invertBookmarks,
 } from '../../editor/bookmarks';
 import { markHighlighter, setMarkEffect, markCount, type MarkOptions } from '../../editor/mark';
 import { findMatchingBracket } from '../../editor/brace-match';
@@ -403,6 +406,71 @@ export class TextEditorComponent implements AfterViewInit, OnDestroy {
   clearBookmarks(): void {
     if (!this.view) return;
     this.view.dispatch({ effects: clearBookmarksEffect.of(null) });
+    this.view.focus();
+  }
+
+  /** Copy the text of all bookmarked lines to the clipboard. Returns the line count. */
+  copyBookmarkedLines(): number {
+    if (!this.view) return 0;
+    const marked = this.collectBookmarkedLines();
+    if (marked.length > 0) void navigator.clipboard?.writeText(marked.join('\n'));
+    this.view.focus();
+    return marked.length;
+  }
+
+  /** Copy the bookmarked lines to the clipboard, then delete them. Returns the line count. */
+  cutBookmarkedLines(): number {
+    if (!this.view) return 0;
+    const marked = this.collectBookmarkedLines();
+    if (marked.length > 0) void navigator.clipboard?.writeText(marked.join('\n'));
+    this.removeBookmarkedLines();
+    return marked.length;
+  }
+
+  /** Delete every bookmarked line from the document. */
+  removeBookmarkedLines(): void {
+    this.keepLines((all, marks) => partitionByBookmarks(all, marks).unmarked);
+  }
+
+  /** Delete every line that is NOT bookmarked, keeping only the bookmarked ones. */
+  removeNonBookmarkedLines(): void {
+    this.keepLines((all, marks) => partitionByBookmarks(all, marks).marked);
+  }
+
+  /** Bookmark every currently unbookmarked line and unbookmark the rest. */
+  inverseBookmarks(): void {
+    if (!this.view) return;
+    const state = this.view.state;
+    const inverted = invertBookmarks(state.doc.lines, bookmarkedLines(state));
+    const positions = inverted.map((n) => state.doc.line(n).from);
+    this.view.dispatch({ effects: setBookmarksEffect.of(positions) });
+    this.view.focus();
+  }
+
+  /** Read the text of each bookmarked line, in document order. */
+  private collectBookmarkedLines(): string[] {
+    if (!this.view) return [];
+    const state = this.view.state;
+    const all = Array.from({ length: state.doc.lines }, (_, i) => state.doc.line(i + 1).text);
+    return partitionByBookmarks(all, bookmarkedLines(state)).marked;
+  }
+
+  /**
+   * Replace the whole document with the lines selected by `pick`, then drop all
+   * bookmarks (their anchor lines may no longer exist).
+   */
+  private keepLines(pick: (all: string[], marks: number[]) => string[]): void {
+    if (!this.view) return;
+    const state = this.view.state;
+    const marks = bookmarkedLines(state);
+    if (marks.length === 0) return;
+    const all = Array.from({ length: state.doc.lines }, (_, i) => state.doc.line(i + 1).text);
+    const kept = pick(all, marks);
+    this.view.dispatch({
+      changes: { from: 0, to: state.doc.length, insert: kept.join('\n') },
+      effects: clearBookmarksEffect.of(null),
+      userEvent: 'delete.line',
+    });
     this.view.focus();
   }
 

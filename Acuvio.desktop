@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Name=Acuvio
+Comment=Launch the Acuvio log/text editor (dev mode)
+# NOTE: Acuvio.desktop uses an absolute path so desktop environments can launch
+# it. After copying this file, run scripts/install-linux-launcher.sh which
+# rewrites Exec/Path/Icon to this checkout's location, or edit the two %ROOT%
+# placeholders below by hand to the absolute path of the repository.
+Exec=bash "%ROOT%/run.sh"
+Path=%ROOT%
+Icon=%ROOT%/src-tauri/icons/icon.png
+Terminal=true
+Categories=Development;Utility;TextEditor;

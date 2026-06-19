@@ -224,6 +224,12 @@ export class ToolbarComponent {
     { action: 'previousBookmark', label: 'Previous Bookmark', shortcut: 'Shift+F2' },
     { action: 'clearBookmarks', label: 'Clear All Bookmarks' },
     { separator: true },
+    { action: 'cutBookmarkedLines', label: 'Cut Bookmarked Lines' },
+    { action: 'copyBookmarkedLines', label: 'Copy Bookmarked Lines' },
+    { action: 'removeBookmarkedLines', label: 'Remove Bookmarked Lines' },
+    { action: 'removeNonBookmarkedLines', label: 'Remove Unbookmarked Lines' },
+    { action: 'inverseBookmarks', label: 'Inverse Bookmarks' },
+    { separator: true },
     { action: 'gotoMatchingBrace', label: 'Go to Matching Brace', shortcut: 'Ctrl+B' },
     { action: 'selectToMatchingBrace', label: 'Select to Matching Brace', shortcut: 'Ctrl+Shift+B' },
   ];
