@@ -17,7 +17,8 @@ import { fileURLToPath } from 'node:url';
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
 const args = process.argv.slice(2);
 const mode = args.includes('--build') ? 'build' : args.includes('--web') ? 'web' : 'dev';
-const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+const isWin = process.platform === 'win32';
+const npm = isWin ? 'npm.cmd' : 'npm';
 
 function log(msg) {
   console.log(`\x1b[36m[acuvio]\x1b[0m ${msg}`);
@@ -27,15 +28,22 @@ function fail(msg) {
   process.exit(1);
 }
 
-/** Run a command inheriting stdio; returns the exit status. */
+/**
+ * Run a command inheriting stdio; returns the exit status.
+ *
+ * On Windows, npm/cargo are `.cmd`/`.bat` shims. Since a recent Node.js security
+ * change, `spawnSync` refuses to execute these without a shell (it returns
+ * immediately with no output), so we run through a shell on Windows.
+ */
 function run(cmd, cmdArgs, opts = {}) {
-  const res = spawnSync(cmd, cmdArgs, { cwd: root, stdio: 'inherit', shell: false, ...opts });
+  const res = spawnSync(cmd, cmdArgs, { cwd: root, stdio: 'inherit', shell: isWin, ...opts });
+  if (res.error) fail(`failed to start "${cmd}": ${res.error.message}`);
   return res.status ?? 1;
 }
 
 /** Check a tool is on PATH by running `<tool> --version`. */
 function has(tool) {
-  const res = spawnSync(tool, ['--version'], { stdio: 'ignore', shell: process.platform === 'win32' });
+  const res = spawnSync(tool, ['--version'], { stdio: 'ignore', shell: isWin });
   return res.status === 0;
 }
 

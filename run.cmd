@@ -7,7 +7,7 @@ REM Optional: run.cmd --build   (production bundle)
 REM           run.cmd --web     (UI only, no Rust backend)
 
 setlocal
-cd /d "%~dp0.."
+cd /d "%~dp0"
 
 where node >nul 2>nul
 if errorlevel 1 (
