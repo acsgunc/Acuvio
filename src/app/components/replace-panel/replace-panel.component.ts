@@ -51,6 +51,8 @@ export interface ReplaceQuery {
         <button [class.active]="regexp()" (click)="toggle('regex')" title="Regular expression">.*</button>
         <button (click)="findPrevious.emit()" title="Previous (Shift+Enter)">↑</button>
         <button (click)="findNext.emit()" title="Next (Enter)">↓</button>
+        <button (click)="mark.emit()" title="Mark all occurrences">⭐ Mark</button>
+        <button (click)="clearMark.emit()" title="Clear mark highlighting">Clear</button>
         <span class="count">{{ matchCount }} {{ matchCount === 1 ? 'match' : 'matches' }}</span>
         <span class="grow"></span>
         <button class="x" (click)="close.emit()" title="Close (Esc)">✕</button>
@@ -114,6 +116,8 @@ export class ReplacePanelComponent implements AfterViewInit {
   @Output() findPrevious = new EventEmitter<void>();
   @Output() replaceNext = new EventEmitter<void>();
   @Output() replaceAll = new EventEmitter<void>();
+  @Output() mark = new EventEmitter<void>();
+  @Output() clearMark = new EventEmitter<void>();
   @Output() close = new EventEmitter<void>();
 
   search = '';

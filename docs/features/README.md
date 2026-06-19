@@ -20,6 +20,7 @@ For the high-level roadmap and feature matrix, see
 | 6 | Advanced Line Operations & Insertions (numeric/length sort, randomize, blank-line, date/time, copy path) | 3 | [06-advanced-line-operations.md](06-advanced-line-operations.md) |
 | 7 | View Rendering Options (show whitespace, trailing whitespace, active line, zoom, theme) | 2, 9 | [07-view-rendering-options.md](07-view-rendering-options.md) |
 | 8 | Bookmarks (toggle / next / previous / clear, gutter marker) | 4 | [08-bookmarks.md](08-bookmarks.md) |
+| 9 | Mark (persistent highlight of all occurrences, case/word/regex) | 4 | [09-mark.md](09-mark.md) |
 
 > Feature scope is guided by a catalog of Notepad++'s own menu commands, so we
 > track parity rather than missing features. The full catalog with per-feature

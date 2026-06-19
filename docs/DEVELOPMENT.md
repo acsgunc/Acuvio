@@ -262,6 +262,9 @@ through `package.json`.
 | `npm run dev` | `tauri dev` — full app with hot reload. |
 | `npm run build` | `ng build` — frontend production build. |
 | `npm test` | `ng test` — Karma/Jasmine unit tests. |
+| `npm run test:run` | One-shot headless Angular/Jasmine run (CI-style). |
+| `npm run test:watch` | Interactive Karma watch mode. |
+| `npm run test:rust` | Rust backend unit tests (`cargo test --lib`). |
 | `npm run fixtures` / `fixtures:large` | Generate manual-test fixtures into `test-fixtures/`. |
 | `npm run sample-log` | Generate / `--follow` a sample log. |
 | `npm run app:build` | `tauri build` — production app bundle. |
@@ -438,6 +441,19 @@ Line bookmarks for editable documents. Full details:
 - **Tests:** +6 Jasmine cases (**31 total**).
 - **Manual coverage:** [`MANUAL_TESTING.md`](MANUAL_TESTING.md) §2.12.
 
+### Increment 9 — Mark (Phase 4, Notepad++ Search → Mark)
+
+Persistent styled highlighting of all occurrences of a term. Full details:
+[`features/09-mark.md`](features/09-mark.md).
+
+- **`editor/mark.ts`** — pure, unit-tested `findMatches` (escape/whole-word/
+  regex/invalid-regex/zero-width) + a `StateField` that recomputes decorations
+  only on term change or doc edit.
+- **`TextEditorComponent`** — `setMark`/`markSelection`/`clearMark`.
+- **Replace bar** gains ⭐ Mark / Clear buttons reusing the find term + options.
+- **Tests:** +8 Jasmine cases (**39 total**).
+- **Test scripts:** `npm run test:run` / `test:watch` / `test:rust` for manual runs.
+
 ---
 
 ## 7. Notepad++ Parity Matrix
@@ -451,7 +467,7 @@ aren't missed. The **full per-feature catalog** (every menu, with status) lives 
 | --- | --- | --- | --- |
 | **File** | New, Open, Save, Save As, Close, Recent, Session, Print | 🟡 | New/Open/Save/Save As/Close done; recent/session/print/rename pending. |
 | **Edit** | Undo/redo, line ops, case, blank ops, comment, EOL, column mode, clipboard history | 🟡 | Line/case/blank/comment/indent/EOL + numeric/length/case sort, randomize, blank-line insert, insert date/time, copy-path done; column editor, clipboard history pending. |
-| **Search** | Find, Replace, Find in Files, Mark, Incremental, Go to line, Bookmarks, Brace match | 🟡 | Find/Replace (edit, +case/word/regex), filter/regex/go-to-line, bookmarks (toggle/next/prev/clear) done; Find-in-Files, Mark, bookmark line-ops, brace-match pending. |
+| **Search** | Find, Replace, Find in Files, Mark, Incremental, Go to line, Bookmarks, Brace match | 🟡 | Find/Replace (edit, +case/word/regex), filter/regex/go-to-line, bookmarks, Mark (persistent highlight) done; Find-in-Files, multi-color mark, bookmark line-ops, brace-match pending. |
 | **View** | Word wrap, zoom, folding, document map, function list, full screen, split, show symbols | 🟡 | Wrap/zoom/folding + show-whitespace, trailing-whitespace, active-line toggles (persisted View menu) done; minimap, outline, split, full-screen, EOL symbols pending. |
 | **Encoding** | UTF-8/16, ANSI, convert-to, BOM | 🟡 | Detection + status display done; interactive convert/reload-as pending. |
 | **Language** | 80+ syntaxes, User Defined Language | 🟡 | 18 languages + pluggable registry; UDL system pending. |

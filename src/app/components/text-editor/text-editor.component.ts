@@ -34,6 +34,7 @@ import {
   nextBookmarkLine,
   prevBookmarkLine,
 } from '../../editor/bookmarks';
+import { markHighlighter, setMarkEffect, markCount, type MarkOptions } from '../../editor/mark';
 import {
   SearchQuery,
   setSearchQuery,
@@ -188,6 +189,7 @@ export class TextEditorComponent implements AfterViewInit, OnDestroy {
             this.fontCompartment.of(this.makeFontTheme(this._fontSize)),
             this.viewOptionsCompartment.of(this.makeViewOptions(this._viewOptions)),
             bookmarks(),
+            markHighlighter(),
             EditorView.theme({
               '&': { height: '100%' },
               '.cm-scroller': { overflow: 'auto' },
@@ -398,6 +400,44 @@ export class TextEditorComponent implements AfterViewInit, OnDestroy {
     if (!this.view) return;
     this.view.dispatch({ effects: clearBookmarksEffect.of(null) });
     this.view.focus();
+  }
+
+  // ---- Mark (Notepad++ Search → Mark) ----
+
+  /**
+   * Persistently highlight every occurrence of `term`. Pass an empty term to
+   * clear. Returns the number of highlighted occurrences.
+   */
+  setMark(term: string, options?: Partial<MarkOptions>): number {
+    if (!this.view) return 0;
+    const opts: MarkOptions = {
+      caseSensitive: options?.caseSensitive ?? false,
+      wholeWord: options?.wholeWord ?? false,
+      regexp: options?.regexp ?? false,
+    };
+    this.view.dispatch({ effects: setMarkEffect.of(term ? { term, options: opts } : null) });
+    return markCount(this.view.state);
+  }
+
+  /** Mark the currently selected text (or the word at the caret). */
+  markSelection(options?: Partial<MarkOptions>): number {
+    if (!this.view) return 0;
+    const sel = this.view.state.selection.main;
+    const term = sel.empty ? this.wordAt(sel.head) : this.view.state.sliceDoc(sel.from, sel.to);
+    return this.setMark(term, options);
+  }
+
+  /** Clear all mark highlighting. */
+  clearMark(): void {
+    if (!this.view) return;
+    this.view.dispatch({ effects: setMarkEffect.of(null) });
+    this.view.focus();
+  }
+
+  /** The word (identifier) surrounding a document position, or ''. */
+  private wordAt(pos: number): string {
+    const range = this.view.state.wordAt(pos);
+    return range ? this.view.state.sliceDoc(range.from, range.to) : '';
   }
 
   private recomputeDirty(): void {

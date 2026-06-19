@@ -85,6 +85,9 @@ export class AppComponent implements OnInit {
   @ViewChild('editor') editor?: TextEditorComponent;
   @ViewChild('replacePanel') replacePanel?: ReplacePanelComponent;
 
+  /** The most recent find/replace query (used by the Mark action). */
+  private lastReplaceQuery: ReplaceQuery | null = null;
+
   readonly tabs = signal<Tab[]>([]);
   readonly activeIndex = signal(0);
   readonly searchOpen = signal(false);
@@ -491,6 +494,7 @@ export class AppComponent implements OnInit {
   }
 
   onReplaceQuery(q: ReplaceQuery): void {
+    this.lastReplaceQuery = q;
     this.editor?.setSearch(q);
     if (this.replacePanel) {
       this.replacePanel.matchCount = this.editor?.countMatches() ?? 0;
@@ -514,6 +518,22 @@ export class AppComponent implements OnInit {
     if (this.replacePanel) {
       this.replacePanel.matchCount = this.editor?.countMatches() ?? 0;
     }
+  }
+
+  /** Persistently highlight all occurrences of the current find term. */
+  onMark(): void {
+    const q = this.lastReplaceQuery;
+    if (!q?.search) return;
+    this.editor?.setMark(q.search, {
+      caseSensitive: q.caseSensitive,
+      wholeWord: q.wholeWord,
+      regexp: q.regexp,
+    });
+  }
+
+  /** Clear all mark highlighting. */
+  onClearMark(): void {
+    this.editor?.clearMark();
   }
 
   /** Save the active editable tab (prompts for a path if it is untitled). */

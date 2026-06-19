@@ -214,22 +214,51 @@ Open any editable file (e.g. `sample.py` or `edit-ops.txt`). Use the
 | Type new lines above a bookmark | The ◆ moves with its line (bookmarks track edits) |
 | Bookmarks → Clear All Bookmarks | All ◆ markers and tints removed |
 
+### 2.13 Mark (Increment 9)
+
+Open any editable file (e.g. `sample.ts`). Open the Find & Replace bar (Ctrl+H or
+Ctrl+F) and type a term in the **Find** box.
+
+| Step | Expected |
+| --- | --- |
+| Type a term, click **⭐ Mark** | Every occurrence gets a persistent yellow highlight |
+| Search for a different term in the Find box | The yellow **Mark** highlight stays on the original term (independent of Find) |
+| Toggle Match Case / Whole Word / Regex, click Mark again | Highlights update to the new matching rules |
+| Edit text so a new occurrence appears | The new occurrence is highlighted too (marks track edits) |
+| Click **Clear** | All yellow mark highlighting removed |
+
 ---
 
 ## 3. Regression sweep (run before every release)
 
 1. `npm run build` — production bundle succeeds.
-2. Frontend tests:
+2. Frontend unit tests (single headless run):
    ```bash
-   npx ng test --watch=false --browsers=ChromeHeadless
+   npm run test:run
    ```
-3. Backend tests:
+   …or interactively while developing:
    ```bash
-   cd src-tauri && cargo test --lib
+   npm run test:watch
    ```
-4. Walk §2.1–§2.9 above with freshly generated fixtures.
+3. Backend (Rust) unit tests:
+   ```bash
+   npm run test:rust
+   ```
+4. Walk §2.1–§2.13 above with freshly generated fixtures.
 
 Record results (date, version, PASS/FAIL per section) in your release notes.
+
+### 3.1 Unit-test script reference
+
+| Command | Action |
+| --- | --- |
+| `npm run test:run` | One-shot headless Angular/Jasmine run (CI-style) |
+| `npm run test:watch` | Interactive Karma watch mode |
+| `npm run test:rust` | Rust backend tests (`cargo test --lib`) |
+| `npm test` | Default `ng test` (watch) |
+
+Current coverage: **39 frontend specs** (`edit-commands`, `bookmarks`, `mark`)
+plus the Rust backend suite (`text_file`, log indexing/search).
 
 ---
 
