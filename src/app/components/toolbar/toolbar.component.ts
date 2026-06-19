@@ -1,8 +1,10 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
+import { DropdownMenuComponent, type MenuItem } from '../dropdown-menu/dropdown-menu.component';
 
 @Component({
   selector: 'app-toolbar',
   standalone: true,
+  imports: [DropdownMenuComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="toolbar">
@@ -12,6 +14,13 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from 
         💾 Save{{ isEdit && dirty ? ' *' : '' }}
       </button>
       <button [disabled]="!isEdit" (click)="saveAs.emit()" title="Save As (Ctrl+Shift+S)">Save As…</button>
+      <span class="sep"></span>
+      <app-dropdown-menu
+        label="Edit"
+        [disabled]="!isEdit"
+        [items]="editMenuItems"
+        (action)="editAction.emit($event)"
+      ></app-dropdown-menu>
       <span class="sep"></span>
       <button
         [class.active]="follow"
@@ -126,6 +135,7 @@ export class ToolbarComponent {
   @Output() newFile = new EventEmitter<void>();
   @Output() save = new EventEmitter<void>();
   @Output() saveAs = new EventEmitter<void>();
+  @Output() editAction = new EventEmitter<string>();
   @Output() toggleFollow = new EventEmitter<void>();
   @Output() toggleSearch = new EventEmitter<void>();
   @Output() toggleFilter = new EventEmitter<void>();
@@ -137,6 +147,40 @@ export class ToolbarComponent {
   @Output() zoomOut = new EventEmitter<void>();
   @Output() zoomReset = new EventEmitter<void>();
   @Output() toggleTheme = new EventEmitter<void>();
+
+  /** Notepad++-style Edit menu (enabled only for editable documents). */
+  readonly editMenuItems: MenuItem[] = [
+    { action: 'duplicateLine', label: 'Duplicate Line', shortcut: 'Ctrl+D' },
+    { action: 'moveLineUp', label: 'Move Line Up', shortcut: 'Alt+↑' },
+    { action: 'moveLineDown', label: 'Move Line Down', shortcut: 'Alt+↓' },
+    { action: 'deleteLine', label: 'Delete Line', shortcut: 'Ctrl+Shift+K' },
+    { action: 'joinLines', label: 'Join Lines' },
+    { separator: true },
+    { action: 'sortAscending', label: 'Sort Lines Ascending' },
+    { action: 'sortDescending', label: 'Sort Lines Descending' },
+    { action: 'reverseLines', label: 'Reverse Line Order' },
+    { action: 'removeDuplicateLines', label: 'Remove Duplicate Lines' },
+    { action: 'removeEmptyLines', label: 'Remove Empty Lines' },
+    { separator: true },
+    { action: 'upperCase', label: 'UPPERCASE' },
+    { action: 'lowerCase', label: 'lowercase' },
+    { action: 'properCase', label: 'Proper Case' },
+    { action: 'sentenceCase', label: 'Sentence case' },
+    { action: 'invertCase', label: 'iNVERT cASE' },
+    { separator: true },
+    { action: 'trimTrailing', label: 'Trim Trailing Whitespace' },
+    { action: 'trimLeading', label: 'Trim Leading Whitespace' },
+    { action: 'tabsToSpaces', label: 'Tabs → Spaces' },
+    { action: 'spacesToTabs', label: 'Spaces → Tabs' },
+    { separator: true },
+    { action: 'toggleComment', label: 'Toggle Comment', shortcut: 'Ctrl+/' },
+    { action: 'indentMore', label: 'Increase Indent', shortcut: 'Tab' },
+    { action: 'indentLess', label: 'Decrease Indent', shortcut: 'Shift+Tab' },
+    { separator: true },
+    { action: 'eolLf', label: 'EOL → Unix (LF)' },
+    { action: 'eolCrlf', label: 'EOL → Windows (CRLF)' },
+    { action: 'eolCr', label: 'EOL → Mac (CR)' },
+  ];
 
   onGoto(event: Event): void {
     event.preventDefault();

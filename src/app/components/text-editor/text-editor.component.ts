@@ -12,9 +12,18 @@ import {
   inject,
 } from '@angular/core';
 import { basicSetup } from 'codemirror';
-import { Compartment, EditorState, type Extension } from '@codemirror/state';
-import { EditorView, keymap } from '@codemirror/view';
-import { indentWithTab } from '@codemirror/commands';
+import { Compartment, EditorState, Prec, type Extension } from '@codemirror/state';
+import { EditorView, keymap, type Command } from '@codemirror/view';
+import {
+  indentWithTab,
+  copyLineDown,
+  moveLineUp,
+  moveLineDown,
+  deleteLine,
+  toggleComment,
+  indentMore,
+  indentLess,
+} from '@codemirror/commands';
 import { LanguageRegistry } from '../../services/language-registry.service';
 
 /**
@@ -120,6 +129,15 @@ export class TextEditorComponent implements AfterViewInit, OnDestroy {
           extensions: [
             basicSetup,
             keymap.of([indentWithTab]),
+            // Notepad++-style line-operation shortcuts (high precedence so they
+            // win over CodeMirror defaults, e.g. Ctrl+D = duplicate, not select).
+            Prec.high(
+              keymap.of([
+                { key: 'Mod-d', run: copyLineDown, preventDefault: true },
+                { key: 'Mod-Shift-k', run: deleteLine, preventDefault: true },
+                { key: 'Mod-/', run: toggleComment, preventDefault: true },
+              ]),
+            ),
             this.languageCompartment.of(this.pendingLanguage),
             this.wrapCompartment.of(this._wordWrap ? EditorView.lineWrapping : []),
             this.fontCompartment.of(this.makeFontTheme(this._fontSize)),
@@ -200,6 +218,37 @@ export class TextEditorComponent implements AfterViewInit, OnDestroy {
 
   focus(): void {
     this.view?.focus();
+  }
+
+  /** Run an arbitrary CodeMirror command against this editor. */
+  runCommand(command: Command): boolean {
+    if (!this.view) return false;
+    const result = command(this.view);
+    this.view.focus();
+    return result;
+  }
+
+  // ---- built-in line operations (CodeMirror @codemirror/commands) ----
+  duplicateLine(): void {
+    this.runCommand(copyLineDown);
+  }
+  moveLineUp(): void {
+    this.runCommand(moveLineUp);
+  }
+  moveLineDown(): void {
+    this.runCommand(moveLineDown);
+  }
+  deleteLine(): void {
+    this.runCommand(deleteLine);
+  }
+  toggleComment(): void {
+    this.runCommand(toggleComment);
+  }
+  indentMore(): void {
+    this.runCommand(indentMore);
+  }
+  indentLess(): void {
+    this.runCommand(indentLess);
   }
 
   private recomputeDirty(): void {

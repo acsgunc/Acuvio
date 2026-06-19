@@ -67,7 +67,7 @@ This document is the single source of truth for the feature roadmap. It captures
 | File change detection | 🟡 | `tailer.rs` watches via `notify`; extend to external-edit prompts. |
 | Read-only mode | ✅ | Default for huge logs (viewer); editable mode for normal files. |
 | Encoding detection (UTF‑8/16, ANSI) | 🟡 | Status bar shows encoding; add detection + conversion. |
-| Line endings (CRLF/LF/CR) | 🟡 | Detected on open and preserved on save (`text_file.rs`); UI display/convert pending. |
+| Line endings (CRLF/LF/CR) | ✅ | Detected on open, convertible via Edit menu, preserved on save. |
 | Zoom | ✅ | Toolbar A−/A+/reset → CodeMirror font-size compartment; persisted. |
 | Word Wrap | ✅ | Toolbar toggle → `EditorView.lineWrapping` compartment; persisted. |
 | Minimap | ⬜ | Optional CM6 minimap extension. |
@@ -86,12 +86,12 @@ This document is the single source of truth for the feature roadmap. It captures
 | Multi-cursor editing | ✅ | CodeMirror native (editable mode). |
 | Column / rectangular selection | ✅ | `basicSetup` rectangular selection (Alt+drag). |
 | Multiple selections | ✅ | CodeMirror native. |
-| Duplicate line | 🟡 | CodeMirror command; add keybinding. |
-| Move line up/down | 🟡 | CodeMirror `moveLineUp/Down`; add keybinding. |
-| Join / split lines | ⬜ | Custom commands. |
-| Delete line | 🟡 | CodeMirror `deleteLine`; add keybinding. |
-| Trim whitespace | ⬜ | Custom transaction. |
-| Convert tabs/spaces | ⬜ | Custom command. |
+| Duplicate line | ✅ | `copyLineDown` via Edit menu + Ctrl+D. |
+| Move line up/down | ✅ | `moveLineUp/Down` via Edit menu + Alt+↑/↓. |
+| Join / split lines | 🟡 | Join done (`joinLines`); split pending. |
+| Delete line | ✅ | `deleteLine` via Edit menu + Ctrl+Shift+K. |
+| Trim whitespace | ✅ | Trim trailing/leading via Edit menu (`edit-commands.ts`). |
+| Convert tabs/spaces | ✅ | Tabs→Spaces / Spaces→Tabs via Edit menu. |
 | Auto / smart indentation | ✅ | `indentOnInput` + `indentWithTab` (editable mode). |
 | Auto-closing brackets/quotes | ✅ | `basicSetup` closeBrackets (editable mode). |
 | Smart Home/End, Smart Backspace | 🟡 | CodeMirror default keymap; verify bindings. |
@@ -359,4 +359,44 @@ lazily-loaded registry. Full details:
 
 The GB-log viewer keeps its bespoke severity highlighter; source-grammar
 highlighting is editable-mode only.
+
+### Increment 4 — Edit operations (Phase 3, Notepad++ Edit menu)
+
+Adds the bulk of Notepad++'s **Edit** menu for editable documents. Full details:
+[`features/04-edit-operations.md`](features/04-edit-operations.md).
+
+- **`edit-commands.ts`** — pure, unit-tested `StateCommand`s: sort asc/desc,
+  reverse, remove duplicate/empty lines, join, case conversion (UPPER/lower/
+  Proper/Sentence/iNVERT), trim trailing/leading, tabs↔spaces.
+- **CodeMirror built-ins** wired for duplicate / move / delete line, toggle
+  comment, indent more/less.
+- **Reusable `DropdownMenuComponent`** hosts the Edit menu (ready for future
+  View/Encoding menus).
+- **Keybindings** (Notepad++ parity): Ctrl+D, Ctrl+Shift+K, Ctrl+/, Alt+↑/↓.
+- **EOL conversion** to LF/CRLF/CR (applied on save).
+- **Tests:** 14 Jasmine cases; Karma switched to zoneless — the project's first
+  frontend unit tests.
+
+---
+
+## 7. Notepad++ Parity Matrix
+
+Derived from Notepad++'s own menu command IDs (`PowerEditor/src/menuCmdID.h`,
+`Notepad_plus.rc`). Tracks coverage of Notepad++'s user-facing menus so features
+aren't missed. Legend: ✅ Done · 🟡 Partial · ⬜ Not started.
+
+| Notepad++ Menu | Representative commands | Status | Notes |
+| --- | --- | --- | --- |
+| **File** | New, Open, Save, Save As, Close, Recent, Session, Print | 🟡 | New/Open/Save/Save As/Close done; recent/session/print/rename pending. |
+| **Edit** | Undo/redo, line ops, case, blank ops, comment, EOL, column mode, clipboard history | 🟡 | Line/case/blank/comment/indent/EOL done; column editor, insert date, copy-path pending. |
+| **Search** | Find, Replace, Find in Files, Mark, Incremental, Go to line, Bookmarks, Brace match | 🟡 | Find/filter/regex/go-to-line done (viewer); Replace, Find-in-Files, bookmarks, brace-match pending. |
+| **View** | Word wrap, zoom, folding, document map, function list, full screen, split, show symbols | 🟡 | Wrap/zoom/folding (edit) done; minimap, outline, split, full-screen, whitespace symbols pending. |
+| **Encoding** | UTF-8/16, ANSI, convert-to, BOM | 🟡 | Detection + status display done; interactive convert/reload-as pending. |
+| **Language** | 80+ syntaxes, User Defined Language | 🟡 | 18 languages + pluggable registry; UDL system pending. |
+| **Settings** | Preferences, Style Configurator, Shortcut Mapper | 🟡 | Theme/font/wrap settings persisted; full preferences + shortcut mapper pending. |
+| **Tools** | MD5/SHA hashing | ⬜ | Not started. |
+| **Macro** | Record, Playback, Save, Run-multiple | ⬜ | Not started (Phase 10). |
+| **Run** | Run external command with `$(VARS)` | ⬜ | Not started. |
+| **Window** | Tab list, sort tabs, windows dialog | 🟡 | Basic tabs done; sorting/window manager pending. |
+| **Misc** | Live tail (Monitoring), large-file performance, multi-cursor, column select | ✅ | Live tail + GB performance are Acuvio's core strengths; multi-cursor/column via CodeMirror. |
 

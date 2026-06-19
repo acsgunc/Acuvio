@@ -17,6 +17,7 @@ import { SearchService } from './services/search.service';
 import { SettingsService } from './services/settings.service';
 import { EditorService } from './services/editor.service';
 import { LanguageRegistry, type LanguageDefinition } from './services/language-registry.service';
+import * as editCommands from './editor/edit-commands';
 import type { Eol, LogMeta, SearchMatch } from './models';
 
 import { ToolbarComponent } from './components/toolbar/toolbar.component';
@@ -353,6 +354,54 @@ export class AppComponent implements OnInit {
   /** Manually set the active editable tab's language. */
   setLanguage(id: string): void {
     this.patchActive((t) => (t.languageId = id));
+  }
+
+  // ---- Edit menu dispatch ----
+
+  /** Route an Edit-menu action to the editor / command module. */
+  onEditAction(action: string): void {
+    const ed = this.editor;
+    if (!ed) return;
+    switch (action) {
+      // CodeMirror built-in line operations
+      case 'duplicateLine': ed.duplicateLine(); break;
+      case 'moveLineUp': ed.moveLineUp(); break;
+      case 'moveLineDown': ed.moveLineDown(); break;
+      case 'deleteLine': ed.deleteLine(); break;
+      case 'toggleComment': ed.toggleComment(); break;
+      case 'indentMore': ed.indentMore(); break;
+      case 'indentLess': ed.indentLess(); break;
+      // Custom command module
+      case 'joinLines': ed.runCommand(editCommands.joinLines); break;
+      case 'sortAscending': ed.runCommand(editCommands.sortLinesAscending); break;
+      case 'sortDescending': ed.runCommand(editCommands.sortLinesDescending); break;
+      case 'reverseLines': ed.runCommand(editCommands.reverseLines); break;
+      case 'removeDuplicateLines': ed.runCommand(editCommands.removeDuplicateLines); break;
+      case 'removeEmptyLines': ed.runCommand(editCommands.removeEmptyLines); break;
+      case 'upperCase': ed.runCommand(editCommands.toUpperCase); break;
+      case 'lowerCase': ed.runCommand(editCommands.toLowerCase); break;
+      case 'properCase': ed.runCommand(editCommands.toProperCase); break;
+      case 'sentenceCase': ed.runCommand(editCommands.toSentenceCase); break;
+      case 'invertCase': ed.runCommand(editCommands.invertCase); break;
+      case 'trimTrailing': ed.runCommand(editCommands.trimTrailingWhitespace); break;
+      case 'trimLeading': ed.runCommand(editCommands.trimLeadingWhitespace); break;
+      case 'tabsToSpaces': ed.runCommand(editCommands.tabsToSpaces()); break;
+      case 'spacesToTabs': ed.runCommand(editCommands.spacesToTabs()); break;
+      // EOL conversion (marks the document dirty; applied on next save)
+      case 'eolLf': this.setEol('lf'); break;
+      case 'eolCrlf': this.setEol('crlf'); break;
+      case 'eolCr': this.setEol('cr'); break;
+    }
+  }
+
+  /** Change the active editable tab's line ending and flag it dirty. */
+  private setEol(eol: Eol): void {
+    const tab = this.activeTab();
+    if (!tab || tab.mode !== 'edit' || tab.eol === eol) return;
+    this.patchActive((t) => {
+      t.eol = eol;
+      t.dirty = true;
+    });
   }
 
   /** Save the active editable tab (prompts for a path if it is untitled). */

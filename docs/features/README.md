@@ -15,6 +15,11 @@ For the high-level roadmap and feature matrix, see
 | 1 | View Preferences (word wrap, zoom, theme, go-to-line, settings) | 2, 9, 12 | [01-view-preferences.md](01-view-preferences.md) |
 | 2 | Editable Document Model (open/save, undo, multi-cursor) | 2, 3, 6 | [02-editable-document-model.md](02-editable-document-model.md) |
 | 3 | Syntax Highlighting & Language Registry | 5 | [03-syntax-highlighting.md](03-syntax-highlighting.md) |
+| 4 | Edit Operations (line ops, case, blank ops, EOL) | 3 | [04-edit-operations.md](04-edit-operations.md) |
+
+> Feature scope is guided by a catalog of Notepad++'s own menu commands, so we
+> track parity rather than missing features. See the parity matrix at the bottom
+> of [`../DEVELOPMENT.md`](../DEVELOPMENT.md).
 
 ## Conventions
 
