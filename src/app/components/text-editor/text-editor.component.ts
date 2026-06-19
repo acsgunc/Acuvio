@@ -207,6 +207,11 @@ export class TextEditorComponent implements AfterViewInit, OnDestroy {
                 { key: 'Mod-d', run: copyLineDown, preventDefault: true },
                 { key: 'Mod-Shift-k', run: deleteLine, preventDefault: true },
                 { key: 'Mod-/', run: toggleComment, preventDefault: true },
+                // Swallow CodeMirror's built-in Find/Replace panel (from
+                // basicSetup) so only Acuvio's own Find dialog opens. The
+                // window-level Ctrl+F / Ctrl+H handler still fires and opens it.
+                { key: 'Mod-f', run: () => true, preventDefault: true },
+                { key: 'Mod-h', run: () => true, preventDefault: true },
                 // Bookmarks (Notepad++ parity): Ctrl+F2 toggle, F2 next, Shift+F2 prev.
                 { key: 'Mod-F2', run: () => (this.toggleBookmark(), true), preventDefault: true },
                 { key: 'F2', run: () => (this.nextBookmark(), true), preventDefault: true },

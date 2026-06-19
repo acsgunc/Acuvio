@@ -1,6 +1,7 @@
 import {
   AfterViewInit,
   ChangeDetectionStrategy,
+  ChangeDetectorRef,
   Component,
   ElementRef,
   EventEmitter,
@@ -9,6 +10,7 @@ import {
   Output,
   SimpleChanges,
   ViewChild,
+  inject,
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -350,6 +352,8 @@ export interface FindResultRow {
 export class FindDialogComponent implements AfterViewInit, OnChanges {
   @ViewChild('findBox') findBox?: ElementRef<HTMLInputElement>;
 
+  private readonly cdr = inject(ChangeDetectorRef);
+
   /** Status / feedback line set by the host (e.g. "12 matches", errors). */
   @Input() status = '';
   /** Render the status line as an error. */
@@ -403,6 +407,9 @@ export class FindDialogComponent implements AfterViewInit, OnChanges {
       this.term = this.seed;
       this.onTermChange();
     }
+    // `term` is a plain field bound via ngModel; under zoneless OnPush a
+    // programmatic change won't reach the <input> without an explicit check.
+    this.cdr.markForCheck();
     queueMicrotask(() => this.focusInput());
   }
 

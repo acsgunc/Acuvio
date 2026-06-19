@@ -65,6 +65,18 @@ body {
   user-select: none;
 }
 
+// The app chrome disables text selection (desktop-app feel), but the document
+// areas (CodeMirror editor + log viewer) MUST allow selecting and copying text
+// — including via right-click and Ctrl+C. Re-enable selection there.
+.cm-editor,
+.cm-editor .cm-scroller,
+.cm-editor .cm-content,
+.cm-editor .cm-line {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+
 button {
   font-family: inherit;
   font-size: 12px;
