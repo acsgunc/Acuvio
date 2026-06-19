@@ -39,13 +39,16 @@ export class LogService {
       let unlisten: UnlistenFn | undefined;
       let closed = false;
 
-      listen<string>('open-file', (event) => subscriber.next(event.payload)).then((fn) => {
-        if (closed) {
-          fn();
-        } else {
-          unlisten = fn;
-        }
-      });
+      try {
+        listen<string>('open-file', (event) => subscriber.next(event.payload))
+          .then((fn) => {
+            if (closed) fn();
+            else unlisten = fn;
+          })
+          .catch(() => void 0);
+      } catch {
+        /* Tauri event API unavailable (e.g. web preview) — silently no-op. */
+      }
 
       return () => {
         closed = true;
@@ -76,20 +79,23 @@ export class LogService {
       let unlisten: UnlistenFn | undefined;
       let closed = false;
 
-      listen<IndexProgress>('index-progress', (event) => {
-        if (event.payload.fileId === fileId) {
-          subscriber.next(event.payload);
-          if (event.payload.done) {
-            subscriber.complete();
+      try {
+        listen<IndexProgress>('index-progress', (event) => {
+          if (event.payload.fileId === fileId) {
+            subscriber.next(event.payload);
+            if (event.payload.done) {
+              subscriber.complete();
+            }
           }
-        }
-      }).then((fn) => {
-        if (closed) {
-          fn();
-        } else {
-          unlisten = fn;
-        }
-      });
+        })
+          .then((fn) => {
+            if (closed) fn();
+            else unlisten = fn;
+          })
+          .catch(() => void 0);
+      } catch {
+        /* Tauri event API unavailable (e.g. web preview) — silently no-op. */
+      }
 
       return () => {
         closed = true;

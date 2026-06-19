@@ -16,18 +16,24 @@ export class TailService {
       let unlisten: UnlistenFn | undefined;
       let closed = false;
 
-      listen<LogAppended>('log-appended', (event) => {
-        if (event.payload.fileId === fileId) {
-          subscriber.next(event.payload);
-        }
-      }).then((fn) => {
-        if (closed) {
-          fn();
-        } else {
-          unlisten = fn;
-          invoke('start_tailing', { fileId }).catch((err) => subscriber.error(err));
-        }
-      });
+      try {
+        listen<LogAppended>('log-appended', (event) => {
+          if (event.payload.fileId === fileId) {
+            subscriber.next(event.payload);
+          }
+        })
+          .then((fn) => {
+            if (closed) {
+              fn();
+            } else {
+              unlisten = fn;
+              invoke('start_tailing', { fileId }).catch((err) => subscriber.error(err));
+            }
+          })
+          .catch((err) => subscriber.error(err));
+      } catch (err) {
+        subscriber.error(err);
+      }
 
       return () => {
         closed = true;

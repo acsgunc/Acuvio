@@ -119,7 +119,11 @@ export class AppComponent implements OnInit {
   async ngOnInit(): Promise<void> {
     // Open files requested by the OS while Acuvio is already running
     // (Windows "Open with Acuvio" context-menu entry on a second launch).
-    this.log.openFileRequests().subscribe((path) => void this.openPath(path));
+    try {
+      this.log.openFileRequests().subscribe((path) => void this.openPath(path));
+    } catch {
+      /* Tauri event API unavailable (e.g. web preview) — ignore. */
+    }
 
     // Open a file passed on the command line at first launch.
     try {
