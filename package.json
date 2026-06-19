@@ -28,7 +28,8 @@
     "update:latest": "node scripts/update-deps.mjs --latest",
     "fixtures": "node scripts/generate-test-fixtures.mjs",
     "fixtures:large": "node scripts/generate-test-fixtures.mjs test-fixtures --large",
-    "sample-log": "node scripts/generate-sample-log.mjs"
+    "sample-log": "node scripts/generate-sample-log.mjs",
+    "copy-session": "node scripts/copy-session.mjs"
   },
   "private": true,
   "dependencies": {
