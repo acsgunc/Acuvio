@@ -50,7 +50,7 @@
     </div>
   }
 
-  @if (searchOpen() && activeTab()) {
+  @if (searchOpen() && activeTab() && activeTab()!.mode !== 'edit') {
     <app-search-panel
       [busy]="activeTab()!.searchBusy"
       [total]="activeTab()!.matches.length"

@@ -43,7 +43,7 @@ import { DropdownMenuComponent, type MenuItem } from '../dropdown-menu/dropdown-
       </button>
       <span class="sep"></span>
       <button
-        [disabled]="!hasFile || isEdit"
+        [disabled]="!hasFile"
         [class.active]="searchOpen"
         (click)="toggleSearch.emit()"
         title="Search (Ctrl+F)"

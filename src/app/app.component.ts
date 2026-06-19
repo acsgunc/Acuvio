@@ -696,18 +696,33 @@ export class AppComponent implements OnInit {
         this.openFind('replace');
       }
     } else if (key === 'f') {
-      // Ctrl+F: editable docs open the Find dialog (Find tab); the log viewer
-      // uses the backend search panel.
-      if (this.activeTab()?.mode === 'edit') {
-        event.preventDefault();
-        this.openFind('find');
-      }
+      // Ctrl+F: editable docs open the floating Find dialog (Find tab); the log
+      // viewer opens the backend-powered inline search panel. Either way it
+      // searches the entire document.
+      const tab = this.activeTab();
+      if (!tab) return;
+      event.preventDefault();
+      if (tab.mode === 'edit') this.openFind('find');
+      else this.searchOpen.set(true);
     }
   }
 
   // ---- search ----
 
+  /**
+   * Open the appropriate full-document search for the active tab:
+   * - **Edit mode:** the floating Find dialog (searches the whole in-memory
+   *   document, with Find/Replace/Mark).
+   * - **Viewer mode (huge logs):** the backend-powered inline search panel,
+   *   which scans the entire memory-mapped file.
+   */
   toggleSearch(): void {
+    const tab = this.activeTab();
+    if (!tab) return;
+    if (tab.mode === 'edit') {
+      this.openFind('find');
+      return;
+    }
     this.searchOpen.update((v) => !v);
   }
 
