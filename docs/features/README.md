@@ -16,10 +16,14 @@ For the high-level roadmap and feature matrix, see
 | 2 | Editable Document Model (open/save, undo, multi-cursor) | 2, 3, 6 | [02-editable-document-model.md](02-editable-document-model.md) |
 | 3 | Syntax Highlighting & Language Registry | 5 | [03-syntax-highlighting.md](03-syntax-highlighting.md) |
 | 4 | Edit Operations (line ops, case, blank ops, EOL) | 3 | [04-edit-operations.md](04-edit-operations.md) |
+| 5 | Find & Replace (find/replace, case/word/regex, count) | 4 | [05-find-replace.md](05-find-replace.md) |
 
 > Feature scope is guided by a catalog of Notepad++'s own menu commands, so we
-> track parity rather than missing features. See the parity matrix at the bottom
-> of [`../DEVELOPMENT.md`](../DEVELOPMENT.md).
+> track parity rather than missing features. The full catalog with per-feature
+> status lives in [`../notepad-plus-plus-features.md`](../notepad-plus-plus-features.md);
+> the rolled-up parity matrix is at the bottom of
+> [`../DEVELOPMENT.md`](../DEVELOPMENT.md). For manual verification steps, see
+> [`../MANUAL_TESTING.md`](../MANUAL_TESTING.md).
 
 ## Conventions
 

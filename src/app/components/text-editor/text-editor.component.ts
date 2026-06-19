@@ -25,6 +25,15 @@ import {
   indentLess,
 } from '@codemirror/commands';
 import { LanguageRegistry } from '../../services/language-registry.service';
+import {
+  SearchQuery,
+  setSearchQuery,
+  findNext,
+  findPrevious,
+  replaceNext,
+  replaceAll,
+  getSearchQuery,
+} from '@codemirror/search';
 
 /**
  * Editable document view for normal-sized files.
@@ -249,6 +258,73 @@ export class TextEditorComponent implements AfterViewInit, OnDestroy {
   }
   indentLess(): void {
     this.runCommand(indentLess);
+  }
+
+  // ---- Find & Replace (driven by @codemirror/search) ----
+
+  /**
+   * Update the active search query. Highlights all matches in the document.
+   * Call before {@link findNext} / {@link replaceAll} etc.
+   */
+  setSearch(opts: {
+    search: string;
+    replace?: string;
+    caseSensitive?: boolean;
+    regexp?: boolean;
+    wholeWord?: boolean;
+  }): void {
+    if (!this.view) return;
+    const query = new SearchQuery({
+      search: opts.search,
+      replace: opts.replace ?? '',
+      caseSensitive: opts.caseSensitive ?? false,
+      regexp: opts.regexp ?? false,
+      wholeWord: opts.wholeWord ?? false,
+    });
+    this.view.dispatch({ effects: setSearchQuery.of(query) });
+  }
+
+  findNext(): void {
+    if (this.view) {
+      findNext(this.view);
+      this.view.focus();
+    }
+  }
+
+  findPrevious(): void {
+    if (this.view) {
+      findPrevious(this.view);
+      this.view.focus();
+    }
+  }
+
+  replaceNext(): void {
+    if (this.view) {
+      replaceNext(this.view);
+      this.view.focus();
+    }
+  }
+
+  replaceAll(): void {
+    if (this.view) {
+      replaceAll(this.view);
+      this.view.focus();
+    }
+  }
+
+  /** Count occurrences of the current query in the document. */
+  countMatches(): number {
+    if (!this.view) return 0;
+    const query = getSearchQuery(this.view.state);
+    if (!query.search) return 0;
+    let count = 0;
+    try {
+      const cursor = query.getCursor(this.view.state);
+      while (!cursor.next().done) count++;
+    } catch {
+      return 0; // invalid regex
+    }
+    return count;
   }
 
   private recomputeDirty(): void {

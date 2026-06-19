@@ -20,7 +20,10 @@
     "app:installer:linux": "tauri build --bundles deb,rpm,appimage",
     "update": "node scripts/update-deps.mjs",
     "update:check": "node scripts/update-deps.mjs --check",
-    "update:latest": "node scripts/update-deps.mjs --latest"
+    "update:latest": "node scripts/update-deps.mjs --latest",
+    "fixtures": "node scripts/generate-test-fixtures.mjs",
+    "fixtures:large": "node scripts/generate-test-fixtures.mjs test-fixtures --large",
+    "sample-log": "node scripts/generate-sample-log.mjs"
   },
   "private": true,
   "dependencies": {

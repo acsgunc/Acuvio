@@ -249,6 +249,7 @@ through `package.json`.
 | --- | --- | --- |
 | `generate-icon.mjs` | `node scripts/generate-icon.mjs` | Generate the base app icon (PNG) before `tauri icon`. |
 | `generate-sample-log.mjs` | `node scripts/generate-sample-log.mjs` | Produce a large sample log for testing GB-scale performance. |
+| `generate-test-fixtures.mjs` | `npm run fixtures` / `:large` | Generate per-language, EOL, encoding, edit-ops and viewer-fallback fixtures for [manual testing](MANUAL_TESTING.md). |
 | `build-installer.mjs` | `npm run app:installer` | Build platform installers (NSIS/MSI/DMG/DEB/RPM/AppImage). |
 | `update-deps.mjs` | `npm run update` / `:check` / `:latest` | Cross-platform npm + Cargo dependency updater (see [`UPDATING.md`](UPDATING.md)). |
 | `update.cmd` / `update.ps1` / `update.sh` | — | OS-specific launchers for the updater. |
@@ -261,6 +262,8 @@ through `package.json`.
 | `npm run dev` | `tauri dev` — full app with hot reload. |
 | `npm run build` | `ng build` — frontend production build. |
 | `npm test` | `ng test` — Karma/Jasmine unit tests. |
+| `npm run fixtures` / `fixtures:large` | Generate manual-test fixtures into `test-fixtures/`. |
+| `npm run sample-log` | Generate / `--follow` a sample log. |
 | `npm run app:build` | `tauri build` — production app bundle. |
 | `npm run app:build:debug` | Debug bundle. |
 | `npm run app:installer[:win/:mac/:linux]` | Platform installers. |
@@ -377,19 +380,35 @@ Adds the bulk of Notepad++'s **Edit** menu for editable documents. Full details:
 - **Tests:** 14 Jasmine cases; Karma switched to zoneless — the project's first
   frontend unit tests.
 
+### Increment 5 — Find & Replace (Phase 4, Notepad++ Search menu)
+
+Adds client-side Find & Replace for editable documents. Full details:
+[`features/05-find-replace.md`](features/05-find-replace.md).
+
+- **`ReplacePanelComponent`** — presentational find/replace bar (find + replace
+  rows, Match Case / Whole Word / Regex toggles, live match count).
+- **`TextEditorComponent`** find/replace surface over `@codemirror/search`:
+  `setSearch`, `findNext/Previous`, `replaceNext`, `replaceAll`, `countMatches`.
+- **Entry points:** `Ctrl+H` and `Ctrl+F` (edit mode) + a toolbar **Replace**
+  button; viewer mode still routes `Ctrl+F` to the backend search panel.
+- **Replace All** runs in a single transaction (one undo step).
+- **Manual coverage:** [`MANUAL_TESTING.md`](MANUAL_TESTING.md) §2.6; fixtures via
+  `npm run fixtures`.
+
 ---
 
 ## 7. Notepad++ Parity Matrix
 
 Derived from Notepad++'s own menu command IDs (`PowerEditor/src/menuCmdID.h`,
 `Notepad_plus.rc`). Tracks coverage of Notepad++'s user-facing menus so features
-aren't missed. Legend: ✅ Done · 🟡 Partial · ⬜ Not started.
+aren't missed. The **full per-feature catalog** (every menu, with status) lives in
+[`notepad-plus-plus-features.md`](notepad-plus-plus-features.md). Legend: ✅ Done · 🟡 Partial · ⬜ Not started.
 
 | Notepad++ Menu | Representative commands | Status | Notes |
 | --- | --- | --- | --- |
 | **File** | New, Open, Save, Save As, Close, Recent, Session, Print | 🟡 | New/Open/Save/Save As/Close done; recent/session/print/rename pending. |
 | **Edit** | Undo/redo, line ops, case, blank ops, comment, EOL, column mode, clipboard history | 🟡 | Line/case/blank/comment/indent/EOL done; column editor, insert date, copy-path pending. |
-| **Search** | Find, Replace, Find in Files, Mark, Incremental, Go to line, Bookmarks, Brace match | 🟡 | Find/filter/regex/go-to-line done (viewer); Replace, Find-in-Files, bookmarks, brace-match pending. |
+| **Search** | Find, Replace, Find in Files, Mark, Incremental, Go to line, Bookmarks, Brace match | 🟡 | Find/Replace (edit, +case/word/regex), filter/regex/go-to-line done; Find-in-Files, Mark, bookmarks, brace-match pending. |
 | **View** | Word wrap, zoom, folding, document map, function list, full screen, split, show symbols | 🟡 | Wrap/zoom/folding (edit) done; minimap, outline, split, full-screen, whitespace symbols pending. |
 | **Encoding** | UTF-8/16, ANSI, convert-to, BOM | 🟡 | Detection + status display done; interactive convert/reload-as pending. |
 | **Language** | 80+ syntaxes, User Defined Language | 🟡 | 18 languages + pluggable registry; UDL system pending. |

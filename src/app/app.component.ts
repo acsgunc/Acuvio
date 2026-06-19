@@ -26,6 +26,7 @@ import { FilterPanelComponent, type FilterRequest } from './components/filter-pa
 import { StatusBarComponent } from './components/status-bar/status-bar.component';
 import { LogViewerComponent } from './components/log-viewer/log-viewer.component';
 import { TextEditorComponent } from './components/text-editor/text-editor.component';
+import { ReplacePanelComponent, type ReplaceQuery } from './components/replace-panel/replace-panel.component';
 
 /** Per-tab UI + backend state. */
 interface Tab {
@@ -67,6 +68,7 @@ interface Tab {
     StatusBarComponent,
     LogViewerComponent,
     TextEditorComponent,
+    ReplacePanelComponent,
   ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
@@ -81,10 +83,12 @@ export class AppComponent implements OnInit {
 
   @ViewChild('viewer') viewer?: LogViewerComponent;
   @ViewChild('editor') editor?: TextEditorComponent;
+  @ViewChild('replacePanel') replacePanel?: ReplacePanelComponent;
 
   readonly tabs = signal<Tab[]>([]);
   readonly activeIndex = signal(0);
   readonly searchOpen = signal(false);
+  readonly replaceOpen = signal(false);
   readonly filterOpen = signal(false);
   readonly errorMsg = signal<string | null>(null);
 
@@ -404,6 +408,44 @@ export class AppComponent implements OnInit {
     });
   }
 
+  // ---- Find & Replace (edit mode) ----
+
+  toggleReplace(): void {
+    const open = !this.replaceOpen();
+    this.replaceOpen.set(open);
+  }
+
+  closeReplace(): void {
+    this.replaceOpen.set(false);
+    this.editor?.focus();
+  }
+
+  onReplaceQuery(q: ReplaceQuery): void {
+    this.editor?.setSearch(q);
+    if (this.replacePanel) {
+      this.replacePanel.matchCount = this.editor?.countMatches() ?? 0;
+    }
+  }
+
+  onReplaceFindNext(): void {
+    this.editor?.findNext();
+  }
+  onReplaceFindPrev(): void {
+    this.editor?.findPrevious();
+  }
+  onReplaceNext(): void {
+    this.editor?.replaceNext();
+    if (this.replacePanel) {
+      this.replacePanel.matchCount = this.editor?.countMatches() ?? 0;
+    }
+  }
+  onReplaceAll(): void {
+    this.editor?.replaceAll();
+    if (this.replacePanel) {
+      this.replacePanel.matchCount = this.editor?.countMatches() ?? 0;
+    }
+  }
+
   /** Save the active editable tab (prompts for a path if it is untitled). */
   async save(): Promise<void> {
     const tab = this.activeTab();
@@ -468,6 +510,19 @@ export class AppComponent implements OnInit {
     } else if (key === 'o') {
       event.preventDefault();
       void this.onOpenFile();
+    } else if (key === 'h') {
+      // Ctrl+H: Find & Replace (editable documents only).
+      if (this.activeTab()?.mode === 'edit') {
+        event.preventDefault();
+        this.replaceOpen.set(true);
+      }
+    } else if (key === 'f') {
+      // Ctrl+F: editable docs use the in-editor replace bar (find row);
+      // the log viewer uses the backend search panel.
+      if (this.activeTab()?.mode === 'edit') {
+        event.preventDefault();
+        this.replaceOpen.set(true);
+      }
     }
   }
 

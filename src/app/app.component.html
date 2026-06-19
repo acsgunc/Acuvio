@@ -17,6 +17,7 @@
     (toggleFollow)="toggleFollow()"
     (toggleSearch)="toggleSearch()"
     (toggleFilter)="toggleFilter()"
+    (toggleReplace)="toggleReplace()"
     (goToTop)="goToTop()"
     (goToEnd)="goToEnd()"
     (gotoLine)="onGotoLine($event)"
@@ -66,6 +67,18 @@
       (clear)="clearFilter()"
       (close)="closeFilter()"
     ></app-filter-panel>
+  }
+
+  @if (replaceOpen() && activeTab()?.mode === 'edit') {
+    <app-replace-panel
+      #replacePanel
+      (query)="onReplaceQuery($event)"
+      (findNext)="onReplaceFindNext()"
+      (findPrevious)="onReplaceFindPrev()"
+      (replaceNext)="onReplaceNext()"
+      (replaceAll)="onReplaceAll()"
+      (close)="closeReplace()"
+    ></app-replace-panel>
   }
 
   <div class="viewer-area">

@@ -47,6 +47,9 @@ import { DropdownMenuComponent, type MenuItem } from '../dropdown-menu/dropdown-
       >
         ⚗ Filter
       </button>
+      <button [disabled]="!isEdit" (click)="toggleReplace.emit()" title="Find & Replace (Ctrl+H)">
+        🔁 Replace
+      </button>
       <span class="sep"></span>
       <button [disabled]="!hasFile" (click)="goToTop.emit()" title="Go to start">⤒ Top</button>
       <button [disabled]="!hasFile" (click)="goToEnd.emit()" title="Go to end">⤓ End</button>
@@ -139,6 +142,7 @@ export class ToolbarComponent {
   @Output() toggleFollow = new EventEmitter<void>();
   @Output() toggleSearch = new EventEmitter<void>();
   @Output() toggleFilter = new EventEmitter<void>();
+  @Output() toggleReplace = new EventEmitter<void>();
   @Output() goToTop = new EventEmitter<void>();
   @Output() goToEnd = new EventEmitter<void>();
   @Output() gotoLine = new EventEmitter<number>();
