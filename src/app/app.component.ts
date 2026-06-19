@@ -424,6 +424,9 @@ export class AppComponent implements OnInit {
       case 'nextBookmark': ed.nextBookmark(); break;
       case 'previousBookmark': ed.previousBookmark(); break;
       case 'clearBookmarks': ed.clearBookmarks(); break;
+      // Brace matching (Notepad++ Search → Go to / Select to Matching Brace)
+      case 'gotoMatchingBrace': ed.goToMatchingBrace(); break;
+      case 'selectToMatchingBrace': ed.selectToMatchingBrace(); break;
     }
   }
 

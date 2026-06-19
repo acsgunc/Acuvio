@@ -35,6 +35,7 @@ import {
   prevBookmarkLine,
 } from '../../editor/bookmarks';
 import { markHighlighter, setMarkEffect, markCount, type MarkOptions } from '../../editor/mark';
+import { findMatchingBracket } from '../../editor/brace-match';
 import {
   SearchQuery,
   setSearchQuery,
@@ -182,6 +183,9 @@ export class TextEditorComponent implements AfterViewInit, OnDestroy {
                 { key: 'Mod-F2', run: () => (this.toggleBookmark(), true), preventDefault: true },
                 { key: 'F2', run: () => (this.nextBookmark(), true), preventDefault: true },
                 { key: 'Shift-F2', run: () => (this.previousBookmark(), true), preventDefault: true },
+                // Brace matching (Notepad++): Ctrl+B go to match, Ctrl+Shift+B select to match.
+                { key: 'Mod-b', run: () => this.goToMatchingBrace(), preventDefault: true },
+                { key: 'Mod-Shift-b', run: () => this.selectToMatchingBrace(), preventDefault: true },
               ]),
             ),
             this.languageCompartment.of(this.pendingLanguage),
@@ -438,6 +442,49 @@ export class TextEditorComponent implements AfterViewInit, OnDestroy {
   private wordAt(pos: number): string {
     const range = this.view.state.wordAt(pos);
     return range ? this.view.state.sliceDoc(range.from, range.to) : '';
+  }
+
+  // ---- Brace matching (Notepad++ Search → Go to / Select to Matching Brace) ----
+
+  /**
+   * Move the caret to the bracket matching the one adjacent to the caret.
+   * Returns false (and does nothing) when the caret is not next to a bracket
+   * with a partner.
+   */
+  goToMatchingBrace(): boolean {
+    if (!this.view) return false;
+    const pos = this.view.state.selection.main.head;
+    const pair = findMatchingBracket(this.view.state, pos);
+    if (!pair) return false;
+    // Land just inside the matching bracket (Notepad++ places the caret there).
+    const target = pair.matchFrom > pair.bracketFrom ? pair.matchTo : pair.matchFrom;
+    this.view.dispatch({
+      selection: { anchor: target },
+      effects: EditorView.scrollIntoView(target, { y: 'center' }),
+      scrollIntoView: true,
+    });
+    this.view.focus();
+    return true;
+  }
+
+  /**
+   * Select the text between the caret's bracket and its match (inclusive of both
+   * brackets). Returns false when there is no matching pair.
+   */
+  selectToMatchingBrace(): boolean {
+    if (!this.view) return false;
+    const pos = this.view.state.selection.main.head;
+    const pair = findMatchingBracket(this.view.state, pos);
+    if (!pair) return false;
+    const from = Math.min(pair.bracketFrom, pair.matchFrom);
+    const to = Math.max(pair.bracketTo, pair.matchTo);
+    this.view.dispatch({
+      selection: { anchor: from, head: to },
+      effects: EditorView.scrollIntoView(to, { y: 'center' }),
+      scrollIntoView: true,
+    });
+    this.view.focus();
+    return true;
   }
 
   private recomputeDirty(): void {

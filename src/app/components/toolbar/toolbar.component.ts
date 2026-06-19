@@ -27,7 +27,7 @@ import { DropdownMenuComponent, type MenuItem } from '../dropdown-menu/dropdown-
         (action)="viewAction.emit($event)"
       ></app-dropdown-menu>
       <app-dropdown-menu
-        label="Bookmarks"
+        label="Search"
         [disabled]="!isEdit"
         [items]="bookmarkMenuItems"
         (action)="editAction.emit($event)"
@@ -222,8 +222,10 @@ export class ToolbarComponent {
     { action: 'toggleBookmark', label: 'Toggle Bookmark', shortcut: 'Ctrl+F2' },
     { action: 'nextBookmark', label: 'Next Bookmark', shortcut: 'F2' },
     { action: 'previousBookmark', label: 'Previous Bookmark', shortcut: 'Shift+F2' },
-    { separator: true },
     { action: 'clearBookmarks', label: 'Clear All Bookmarks' },
+    { separator: true },
+    { action: 'gotoMatchingBrace', label: 'Go to Matching Brace', shortcut: 'Ctrl+B' },
+    { action: 'selectToMatchingBrace', label: 'Select to Matching Brace', shortcut: 'Ctrl+Shift+B' },
   ];
 
   /** Notepad++-style View menu with checkable render options. */

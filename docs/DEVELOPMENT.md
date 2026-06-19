@@ -250,6 +250,7 @@ through `package.json`.
 | `generate-icon.mjs` | `node scripts/generate-icon.mjs` | Generate the base app icon (PNG) before `tauri icon`. |
 | `generate-sample-log.mjs` | `node scripts/generate-sample-log.mjs` | Produce a large sample log for testing GB-scale performance. |
 | `generate-test-fixtures.mjs` | `npm run fixtures` / `:large` | Generate per-language, EOL, encoding, edit-ops and viewer-fallback fixtures for [manual testing](MANUAL_TESTING.md). |
+| `run.mjs` | `npm run app` (or `run.cmd` / `run.sh`) | One-click launcher: verifies toolchain, installs deps on first run, then opens the app (`--build` / `--web` variants). |
 | `build-installer.mjs` | `npm run app:installer` | Build platform installers (NSIS/MSI/DMG/DEB/RPM/AppImage). |
 | `update-deps.mjs` | `npm run update` / `:check` / `:latest` | Cross-platform npm + Cargo dependency updater (see [`UPDATING.md`](UPDATING.md)). |
 | `update.cmd` / `update.ps1` / `update.sh` | — | OS-specific launchers for the updater. |
@@ -259,6 +260,7 @@ through `package.json`.
 | Command | Action |
 | --- | --- |
 | `npm start` | `ng serve` — web-only UI (no backend commands). |
+| `npm run app` | One-click launcher (`run.cmd` / `run.sh` wrap this). |
 | `npm run dev` | `tauri dev` — full app with hot reload. |
 | `npm run build` | `ng build` — frontend production build. |
 | `npm test` | `ng test` — Karma/Jasmine unit tests. |
@@ -454,6 +456,18 @@ Persistent styled highlighting of all occurrences of a term. Full details:
 - **Tests:** +8 Jasmine cases (**39 total**).
 - **Test scripts:** `npm run test:run` / `test:watch` / `test:rust` for manual runs.
 
+### Increment 10 — Brace matching (Phase 4, Notepad++ Search → Matching Brace)
+
+Go-to and select-to matching brace. Full details:
+[`features/10-brace-matching.md`](features/10-brace-matching.md).
+
+- **`editor/brace-match.ts`** — pure `findMatchingBracket` wrapping
+  `@codemirror/language` `matchBrackets`, multi-probing both sides of the caret.
+- **`TextEditorComponent`** — `goToMatchingBrace` / `selectToMatchingBrace`;
+  Notepad++ shortcuts Ctrl+B / Ctrl+Shift+B; Search dropdown items.
+- **Tests:** +5 Jasmine cases (**44 total**).
+- **One-click run:** `run.cmd` / `run.sh` / `npm run app` (see §4).
+
 ---
 
 ## 7. Notepad++ Parity Matrix
@@ -467,7 +481,7 @@ aren't missed. The **full per-feature catalog** (every menu, with status) lives 
 | --- | --- | --- | --- |
 | **File** | New, Open, Save, Save As, Close, Recent, Session, Print | 🟡 | New/Open/Save/Save As/Close done; recent/session/print/rename pending. |
 | **Edit** | Undo/redo, line ops, case, blank ops, comment, EOL, column mode, clipboard history | 🟡 | Line/case/blank/comment/indent/EOL + numeric/length/case sort, randomize, blank-line insert, insert date/time, copy-path done; column editor, clipboard history pending. |
-| **Search** | Find, Replace, Find in Files, Mark, Incremental, Go to line, Bookmarks, Brace match | 🟡 | Find/Replace (edit, +case/word/regex), filter/regex/go-to-line, bookmarks, Mark (persistent highlight) done; Find-in-Files, multi-color mark, bookmark line-ops, brace-match pending. |
+| **Search** | Find, Replace, Find in Files, Mark, Incremental, Go to line, Bookmarks, Brace match | 🟡 | Find/Replace (edit, +case/word/regex), filter/regex/go-to-line, bookmarks, Mark, brace-match (go-to/select) done; Find-in-Files, multi-color mark, bookmark line-ops pending. |
 | **View** | Word wrap, zoom, folding, document map, function list, full screen, split, show symbols | 🟡 | Wrap/zoom/folding + show-whitespace, trailing-whitespace, active-line toggles (persisted View menu) done; minimap, outline, split, full-screen, EOL symbols pending. |
 | **Encoding** | UTF-8/16, ANSI, convert-to, BOM | 🟡 | Detection + status display done; interactive convert/reload-as pending. |
 | **Language** | 80+ syntaxes, User Defined Language | 🟡 | 18 languages + pluggable registry; UDL system pending. |

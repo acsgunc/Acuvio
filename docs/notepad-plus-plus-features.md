@@ -87,7 +87,7 @@ For the per-increment delivery record and the rolled-up parity matrix, see
 | Incremental Search | 🟡 Partial (viewer search bar) |
 | Search Results window | 🟡 Partial (viewer result list) |
 | Go to… (line / offset) | ✅ Done (Go to line) |
-| Brace matching (go to / select between) | ⛔ Not yet |
+| Brace matching (go to / select between) | ✅ Done |
 | Mark (persistent highlight of matches) | 🟡 Partial (single-style mark all + clear done; 1st–5th multi-color styles & jump pending) |
 | Change History (jump to modified lines) | ⛔ Not yet |
 | Smart Highlighting / Styling (1st–5th style, jump, copy styled) | ⛔ Not yet |

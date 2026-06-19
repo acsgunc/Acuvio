@@ -65,7 +65,16 @@ npx @tauri-apps/cli icon src-tauri/icons/icon.png
 
 ## Run (development)
 
-Launches the Angular dev server and the Tauri window with hot reload:
+**One click / one command** — installs dependencies on first run, then opens the
+desktop window:
+
+- **Windows:** double-click **`run.cmd`**
+- **macOS / Linux:** **`./run.sh`**
+- **Any OS:** **`npm run app`**
+
+Optional flags: `--build` (production bundle) or `--web` (UI only).
+
+Or run the underlying step directly with hot reload:
 
 ```bash
 npm run dev          # == tauri dev
@@ -77,7 +86,7 @@ npm run dev          # == tauri dev
 To run only the web UI in a browser (backend commands are unavailable):
 
 ```bash
-npm start            # ng serve
+npm start            # ng serve  (or: npm run app:web)
 ```
 
 ---

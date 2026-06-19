@@ -45,6 +45,10 @@ the GB-scale viewer fast path.
    ```bash
    npm run dev
    ```
+   …or, for a **one-click start** that also installs dependencies on first run:
+   - **Windows:** double-click `run.cmd` (repo root)
+   - **macOS/Linux:** `./run.sh`
+   - **Any OS:** `npm run app`
 
 ---
 
@@ -226,6 +230,18 @@ Ctrl+F) and type a term in the **Find** box.
 | Toggle Match Case / Whole Word / Regex, click Mark again | Highlights update to the new matching rules |
 | Edit text so a new occurrence appears | The new occurrence is highlighted too (marks track edits) |
 | Click **Clear** | All yellow mark highlighting removed |
+
+### 2.14 Brace matching (Increment 10)
+
+Open a code file (e.g. `sample.ts` or `sample.rs`).
+
+| Step | Expected |
+| --- | --- |
+| Place caret next to a `(`, `[`, or `{`, press Ctrl+B | Caret jumps to the matching closing bracket |
+| With caret next to a closing bracket, press Ctrl+B | Caret jumps back to the opener |
+| Search menu → Go to Matching Brace | Same as Ctrl+B |
+| Place caret next to a bracket, press Ctrl+Shift+B | The whole bracket-enclosed range (both brackets included) is selected |
+| Caret not next to any bracket, press Ctrl+B | Nothing happens (no error) |
 
 ---
 
