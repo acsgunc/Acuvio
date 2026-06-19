@@ -288,6 +288,15 @@ export class AppComponent implements OnInit {
   toggleFollow(): void {
     const tab = this.activeTab();
     if (!tab) return;
+
+    // Editable documents aren't backed by a tailable mmap file. To follow one,
+    // reopen its on-disk file in the read-only viewer (which supports tailing)
+    // and start following there.
+    if (tab.mode === 'edit') {
+      void this.followEditFileInViewer(tab);
+      return;
+    }
+
     const next = !tab.follow;
     this.patchActive((t) => (t.follow = next));
 
@@ -314,6 +323,32 @@ export class AppComponent implements OnInit {
         t.tailing = false;
       });
     }
+  }
+
+  /**
+   * Follow (live-tail) an editable document: reopen its file in the read-only
+   * viewer and start following. Discards unsaved edits (after confirmation),
+   * since tailing tracks the on-disk file.
+   */
+  private async followEditFileInViewer(tab: Tab): Promise<void> {
+    const path = tab.meta.path;
+    if (!path) return; // Unsaved buffer — nothing on disk to follow.
+
+    if (tab.dirty) {
+      const ok = confirm(
+        `Following "${this.tabName(tab)}" reopens it read-only and tracks new ` +
+          `lines from disk. Unsaved changes will be lost. Continue?`,
+      );
+      if (!ok) return;
+    }
+
+    // Drop the in-memory edit tab, then open the file as a read-only viewer.
+    tab.subs.forEach((s) => s.unsubscribe());
+    this.tabs.update((arr) => arr.filter((t) => t !== tab));
+
+    await this.openAsViewer(path);
+    // The viewer tab is now active and not yet following — turn it on.
+    if (this.activeTab()?.mode === 'view') this.toggleFollow();
   }
 
   goToTop(): void {

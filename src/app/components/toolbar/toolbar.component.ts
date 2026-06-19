@@ -35,9 +35,9 @@ import { DropdownMenuComponent, type MenuItem } from '../dropdown-menu/dropdown-
       <span class="sep"></span>
       <button
         [class.active]="follow"
-        [disabled]="!hasFile || isEdit"
+        [disabled]="!hasFile || (isEdit && !hasPath)"
         (click)="toggleFollow.emit()"
-        title="Follow / live-tail the file"
+        [title]="followTitle()"
       >
         {{ follow ? '⏸ Following' : '▶ Follow' }}
       </button>
@@ -142,6 +142,8 @@ export class ToolbarComponent {
   @Input() theme: 'dark' | 'light' = 'dark';
   /** True when the active tab is an editable document. */
   @Input() isEdit = false;
+  /** True when the active tab is backed by a real file on disk (has a path). */
+  @Input() hasPath = false;
   /** True when the active editable document has unsaved changes. */
   @Input() dirty = false;
   /** View → render-option toggle states (drive the checkmarks). */
@@ -273,5 +275,13 @@ export class ToolbarComponent {
     if (Number.isFinite(line) && line >= 1) {
       this.gotoLine.emit(Math.floor(line));
     }
+  }
+
+  /** Tooltip explaining the Follow button's state. */
+  followTitle(): string {
+    if (!this.hasFile) return 'Open a file to follow it';
+    if (this.isEdit && !this.hasPath) return 'Save the file first to follow (live-tail) it';
+    if (this.isEdit) return 'Follow (live-tail): reopens this file read-only and tracks new lines';
+    return this.follow ? 'Stop following' : 'Follow / live-tail the file';
   }
 }

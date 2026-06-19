@@ -8,6 +8,7 @@
     [fontSize]="settings.fontSize()"
     [theme]="settings.theme()"
     [isEdit]="activeTab()?.mode === 'edit'"
+    [hasPath]="!!activeTab()?.meta?.path"
     [dirty]="activeTab()?.dirty ?? false"
     [showWhitespace]="settings.showWhitespace()"
     [highlightActiveLine]="settings.highlightActiveLine()"
